@@ -39,17 +39,27 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const today = new Date().toLocaleDateString("en-CA"); // "2026-05-02" format
 
+  const [stats_data, setStatsData] = useState({
+    total_completed: 0,
+    total_canceled: 0,
+    total_today: 0,
+  });
+
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [appts, docs] = await Promise.all([
+        const [appts, docs, stats] = await Promise.all([
           api.post("/appointments/list", { date: today }),
           api.get("/doctors/"),
+          api.get("/appointments/stats"),
         ]);
+
         setTodayAppts(appts.data);
         setDoctors(docs.data);
+        setStatsData(stats.data);
 
         const days = getLast7Days();
+
         const weekResults = await Promise.all(
           days.map((date) =>
             api.post("/appointments/list", { date }).then((r) => ({
@@ -61,23 +71,27 @@ export default function Dashboard() {
             })),
           ),
         );
+
         setWeekData(weekResults);
-      } catch {
+      } catch (err) {
+        console.log(err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchAll();
   }, []);
 
   const stats = [
     {
       label: "Today's Appointments",
-      value: todayAppts.length,
+      value: stats_data.total_today,
       icon: Calendar,
       color: "#1565c0",
       bg: "bg-primary-50",
       iconColor: "text-primary-500",
+      accent: "#1565c0",
     },
     {
       label: "Total Doctors",
@@ -86,22 +100,25 @@ export default function Dashboard() {
       color: "#7c3aed",
       bg: "bg-violet-50",
       iconColor: "text-violet-600",
+      accent: "#7c3aed",
     },
     {
-      label: "Completed",
-      value: todayAppts.filter((a) => a.status === "completed").length,
+      label: "Total Completed",
+      value: stats_data.total_completed,
       icon: CheckCircle,
       color: "#059669",
       bg: "bg-emerald-50",
       iconColor: "text-emerald-600",
+      accent: "#059669",
     },
     {
-      label: "Canceled",
-      value: todayAppts.filter((a) => a.status === "canceled").length,
+      label: "Total Canceled",
+      value: stats_data.total_canceled,
       icon: XCircle,
       color: "#dc2626",
       bg: "bg-red-50",
       iconColor: "text-red-600",
+      accent: "#dc2626",
     },
   ];
 

@@ -103,7 +103,7 @@ def vapi_webhook(
 
         except Exception as e:
             print(f"[VAPI ERROR] Tool: {tool_name} | Error: {str(e)}")
-            result = {"error": str(e)}
+            result = {"message": "I'm sorry, I'm having trouble connecting to our booking system right now. Please call back in a few minutes."}
 
         results.append({
             "toolCallId": tool_call_id,

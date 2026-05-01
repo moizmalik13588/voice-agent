@@ -85,7 +85,37 @@ def get_available_slots(
         "slot_duration_minutes": availability.slot_duration_minutes,
         "available_slots": [s.strftime("%H:%M") for s in available]
     }
+@router.get("/stats")
+def get_appointment_stats(
+    db: Session = Depends(get_db),
+    hospital=Depends(get_hospital)
+):
+    from sqlalchemy import func
+    
+    total_completed = db.execute(
+        select(func.count(Appointment.id))
+        .where(Appointment.hospital_id == hospital.id)
+        .where(Appointment.status == AppointmentStatus.completed)
+    ).scalar()
 
+    total_canceled = db.execute(
+        select(func.count(Appointment.id))
+        .where(Appointment.hospital_id == hospital.id)
+        .where(Appointment.status == AppointmentStatus.canceled)
+    ).scalar()
+
+    total_today = db.execute(
+        select(func.count(Appointment.id))
+        .where(Appointment.hospital_id == hospital.id)
+        .where(Appointment.start_time >= dt.datetime.combine(dt.date.today(), dt.time.min))
+        .where(Appointment.start_time < dt.datetime.combine(dt.date.today(), dt.time.min) + dt.timedelta(days=1))
+    ).scalar()
+
+    return {
+        "total_completed": total_completed,
+        "total_canceled": total_canceled,
+        "total_today": total_today,
+    }
 
 # Book appointment
 @router.post("/", response_model=AppointmentResponse)
@@ -285,3 +315,5 @@ def _format_appointment(appointment: Appointment, doctor_name: str) -> dict:
         "end_time": appointment.end_time,
         "status": appointment.status,
     }
+
+
