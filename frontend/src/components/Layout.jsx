@@ -19,34 +19,12 @@ export default function Layout({ children }) {
   const hospital = getHospital();
 
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "100vh",
-        width: "100vw",
-        overflow: "hidden",
-      }}
-    >
+    <div className="flex h-screen w-screen overflow-hidden">
       {/* ── Sidebar ── */}
-      <aside
-        style={{
-          width: "240px",
-          background: "#0a1628",
-          display: "flex",
-          flexDirection: "column",
-          flexShrink: 0,
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
+      <aside className="w-60 bg-navy flex flex-col flex-shrink-0 relative overflow-hidden">
         {/* Decorative cross */}
         <svg
-          style={{
-            position: "absolute",
-            bottom: "60px",
-            right: "-20px",
-            opacity: 0.05,
-          }}
+          className="absolute bottom-16 -right-5 opacity-[0.05]"
           width="100"
           height="100"
           viewBox="0 0 100 100"
@@ -55,103 +33,22 @@ export default function Layout({ children }) {
           <rect x="0" y="38" width="100" height="24" rx="8" fill="white" />
         </svg>
 
-        {/* Dot grid */}
-        <svg
-          style={{
-            position: "absolute",
-            top: "160px",
-            left: "12px",
-            opacity: 0.04,
-          }}
-          width="80"
-          height="80"
-          viewBox="0 0 80 80"
-        >
-          {[0, 1, 2, 3, 4].map((r) =>
-            [0, 1, 2, 3, 4].map((c) => (
-              <circle
-                key={`${r}${c}`}
-                cx={c * 16 + 8}
-                cy={r * 16 + 8}
-                r="2"
-                fill="white"
-              />
-            )),
-          )}
-        </svg>
-
         {/* Logo */}
-        <div
-          style={{
-            padding: "24px 20px 20px",
-            borderBottom: "1px solid rgba(255,255,255,0.07)",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-          }}
-        >
-          <div
-            style={{
-              width: "36px",
-              height: "36px",
-              background: "#1565c0",
-              borderRadius: "10px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <Building2 size={18} color="white" />
+        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/[0.07]">
+          <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Building2 size={18} className="text-white" />
           </div>
-          <div>
-            <p
-              style={{
-                fontSize: "15px",
-                fontWeight: "700",
-                color: "white",
-                margin: 0,
-                letterSpacing: "-0.3px",
-              }}
-            >
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-white tracking-tight">
               MediBook
             </p>
-            <p
-              style={{
-                fontSize: "11px",
-                color: "rgba(255,255,255,0.4)",
-                margin: 0,
-                maxWidth: "140px",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {hospital?.name}
-            </p>
+            <p className="text-xs text-white/40 truncate">{hospital?.name}</p>
           </div>
         </div>
 
         {/* Nav */}
-        <nav
-          style={{
-            flex: 1,
-            padding: "12px 10px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "2px",
-          }}
-        >
-          <p
-            style={{
-              fontSize: "10px",
-              fontWeight: "600",
-              color: "rgba(255,255,255,0.25)",
-              letterSpacing: "1px",
-              textTransform: "uppercase",
-              padding: "8px 10px 6px",
-            }}
-          >
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
+          <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest px-3 py-2">
             Menu
           </p>
           {NAV.map(({ to, icon: Icon, label }) => (
@@ -159,39 +56,20 @@ export default function Layout({ children }) {
               key={to}
               to={to}
               end={to === "/"}
-              style={({ isActive }) => ({
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "10px 12px",
-                borderRadius: "9px",
-                textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: "500",
-                transition: "all 0.15s",
-                background: isActive ? "rgba(255,255,255,0.1)" : "transparent",
-                color: isActive ? "white" : "rgba(255,255,255,0.5)",
-              })}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+                ${isActive ? "bg-white/15 text-white" : "text-white/50 hover:bg-white/10 hover:text-white"}`
+              }
             >
               {({ isActive }) => (
                 <>
                   <div
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "8px",
-                      flexShrink: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: isActive
-                        ? "#1565c0"
-                        : "rgba(255,255,255,0.05)",
-                    }}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all
+                    ${isActive ? "bg-primary-500" : "bg-white/[0.05]"}`}
                   >
                     <Icon
                       size={16}
-                      color={isActive ? "white" : "rgba(255,255,255,0.5)"}
+                      className={isActive ? "text-white" : "text-white/50"}
                     />
                   </div>
                   {label}
@@ -201,64 +79,26 @@ export default function Layout({ children }) {
           ))}
         </nav>
 
-        {/* Hospital info + Logout */}
-        <div
-          style={{
-            padding: "12px 10px",
-            borderTop: "1px solid rgba(255,255,255,0.07)",
-          }}
-        >
+        {/* Logout */}
+        <div className="px-3 pb-4 border-t border-white/[0.07] pt-3">
           <button
             onClick={() => {
               logout();
               navigate("/login");
             }}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              padding: "10px 12px",
-              borderRadius: "9px",
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              transition: "all 0.15s",
-              fontSize: "14px",
-              fontWeight: "500",
-              color: "rgba(255,255,255,0.4)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(239,68,68,0.1)";
-              e.currentTarget.style.color = "#f87171";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "rgba(255,255,255,0.4)";
-            }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+                       text-white/40 hover:bg-red-500/10 hover:text-red-400 transition-all"
           >
-            <div
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "rgba(255,255,255,0.05)",
-              }}
-            >
-              <LogOut size={15} color="currentColor" />
+            <div className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center flex-shrink-0">
+              <LogOut size={15} />
             </div>
             Sign Out
           </button>
         </div>
       </aside>
 
-      {/* ── Main Content ── */}
-      <main style={{ flex: 1, overflow: "auto", background: "#f8fafc" }}>
-        {children}
-      </main>
+      {/* ── Main ── */}
+      <main className="flex-1 overflow-auto bg-surface">{children}</main>
     </div>
   );
 }

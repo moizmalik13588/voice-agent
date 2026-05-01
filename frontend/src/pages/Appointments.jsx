@@ -4,10 +4,10 @@ import api from "../api/axios";
 import toast from "react-hot-toast";
 
 const STATUS_COLORS = {
-  scheduled: { bg: "#e3f0fc", color: "#1565c0" },
-  completed: { bg: "#ecfdf5", color: "#059669" },
-  canceled: { bg: "#fef2f2", color: "#dc2626" },
-  no_show: { bg: "#fffbeb", color: "#d97706" },
+  scheduled: "badge-scheduled",
+  completed: "badge-completed",
+  canceled: "badge-canceled",
+  no_show: "badge-no_show",
 };
 
 const emptyForm = {
@@ -46,7 +46,7 @@ export default function Appointments() {
       const res = await api.post("/appointments/list", { date: filterDate });
       setAppointments(res.data);
     } catch {
-      toast.error("Failed to load appointments");
+      toast.error("Failed to load");
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,6 @@ export default function Appointments() {
     } catch {}
   };
 
-  // Jab doctor + date select ho toh slots fetch karo
   const fetchSlots = async (doctorId, date) => {
     if (!doctorId || !date) return;
     setLoadingSlots(true);
@@ -79,19 +78,17 @@ export default function Appointments() {
   };
 
   const handleFormChange = (field, value) => {
-    const updated = { ...form, [field]: value };
-    setForm(updated);
-    if (field === "doctor_id" || field === "date") {
+    setForm((f) => ({ ...f, [field]: value }));
+    if (field === "doctor_id" || field === "date")
       fetchSlots(
         field === "doctor_id" ? value : form.doctor_id,
         field === "date" ? value : form.date,
       );
-    }
   };
 
   const handleBook = async () => {
     if (!form.doctor_id || !form.patient_name || !form.date || !form.time)
-      return toast.error("Please fill all required fields");
+      return toast.error("Fill all required fields");
     setSaving(true);
     try {
       await api.post("/appointments/", {
@@ -117,10 +114,10 @@ export default function Appointments() {
     if (!confirm("Cancel this appointment?")) return;
     try {
       await api.patch(`/appointments/${id}/cancel`);
-      toast.success("Appointment canceled");
+      toast.success("Canceled");
       fetchAppointments();
     } catch {
-      toast.error("Failed to cancel");
+      toast.error("Failed");
     }
   };
 
@@ -130,7 +127,7 @@ export default function Appointments() {
       toast.success(`Marked as ${status}`);
       fetchAppointments();
     } catch {
-      toast.error("Failed to update status");
+      toast.error("Failed");
     }
   };
 
@@ -140,37 +137,20 @@ export default function Appointments() {
       a.doctor_name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  // Convert "09:00" → "09:00 AM"
   const fmt12 = (t) => {
     const [h, m] = t.split(":").map(Number);
-    const ampm = h >= 12 ? "PM" : "AM";
-    return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${ampm}`;
+    return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
   };
 
   return (
-    <div style={{ padding: "32px", maxWidth: "1100px", margin: "0 auto" }}>
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "28px",
-        }}
-      >
+      <div className="flex items-center justify-between mb-7">
         <div>
-          <h1
-            style={{
-              fontSize: "26px",
-              fontWeight: "700",
-              color: "#0f172a",
-              margin: "0 0 4px",
-              letterSpacing: "-0.5px",
-            }}
-          >
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-1">
             Appointments
           </h1>
-          <p style={{ fontSize: "14px", color: "#94a3b8", margin: 0 }}>
+          <p className="text-sm text-slate-400">
             {filtered.length} appointment{filtered.length !== 1 ? "s" : ""} on{" "}
             {new Date(filterDate + "T00:00:00").toLocaleDateString("en-PK", {
               month: "long",
@@ -178,114 +158,40 @@ export default function Appointments() {
             })}
           </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "#1565c0",
-            color: "white",
-            border: "none",
-            padding: "10px 18px",
-            borderRadius: "10px",
-            fontSize: "14px",
-            fontWeight: "600",
-            cursor: "pointer",
-          }}
-        >
-          <Plus size={17} /> Book Appointment
+        <button onClick={() => setShowModal(true)} className="btn-primary">
+          <Plus size={16} /> Book Appointment
         </button>
       </div>
 
       {/* Filters */}
-      <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
-        {/* Date picker */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "white",
-            border: "1px solid #e2e8f0",
-            borderRadius: "10px",
-            padding: "9px 14px",
-          }}
-        >
-          <Filter size={15} color="#94a3b8" />
+      <div className="flex gap-3 mb-5">
+        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5">
+          <Filter size={14} className="text-slate-400" />
           <input
             type="date"
             value={filterDate}
             onChange={(e) => setFilterDate(e.target.value)}
-            style={{
-              border: "none",
-              outline: "none",
-              fontSize: "14px",
-              color: "#0f172a",
-              background: "transparent",
-            }}
+            className="border-none outline-none text-sm text-slate-900 bg-transparent"
           />
         </div>
-
-        {/* Search */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "white",
-            border: "1px solid #e2e8f0",
-            borderRadius: "10px",
-            padding: "9px 14px",
-          }}
-        >
-          <Search size={15} color="#94a3b8" />
+        <div className="flex-1 flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5">
+          <Search size={14} className="text-slate-400" />
           <input
             placeholder="Search patient or doctor..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              border: "none",
-              outline: "none",
-              fontSize: "14px",
-              color: "#0f172a",
-              background: "transparent",
-              width: "100%",
-            }}
+            className="border-none outline-none text-sm text-slate-900 bg-transparent w-full"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div
-        style={{
-          background: "white",
-          borderRadius: "14px",
-          border: "1px solid #f1f5f9",
-          overflow: "hidden",
-        }}
-      >
-        {/* Column headers */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 2fr 1fr 1fr 1fr",
-            padding: "12px 24px",
-            background: "#f8fafc",
-            borderBottom: "1px solid #f1f5f9",
-          }}
-        >
+      <div className="card overflow-hidden">
+        <div className="grid grid-cols-5 px-5 py-3 bg-slate-50 border-b border-slate-100">
           {["Patient", "Doctor", "Time", "Status", "Actions"].map((h) => (
             <span
               key={h}
-              style={{
-                fontSize: "11px",
-                fontWeight: "600",
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
+              className="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
             >
               {h}
             </span>
@@ -293,174 +199,66 @@ export default function Appointments() {
         </div>
 
         {loading ? (
-          <div
-            style={{
-              padding: "48px",
-              textAlign: "center",
-              color: "#94a3b8",
-              fontSize: "14px",
-            }}
-          >
+          <div className="py-12 text-center text-sm text-slate-400">
             Loading...
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: "48px", textAlign: "center" }}>
-            <Calendar
-              size={36}
-              color="#e2e8f0"
-              style={{ marginBottom: "10px" }}
-            />
-            <p style={{ color: "#94a3b8", fontSize: "14px", margin: 0 }}>
-              No appointments found
-            </p>
+          <div className="py-12 text-center">
+            <Calendar size={28} className="text-slate-200 mx-auto mb-2" />
+            <p className="text-sm text-slate-400">No appointments found</p>
           </div>
         ) : (
           filtered.map((a, i) => (
             <div
               key={a.id}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "2fr 2fr 1fr 1fr 1fr",
-                padding: "14px 24px",
-                alignItems: "center",
-                borderBottom:
-                  i < filtered.length - 1 ? "1px solid #f8fafc" : "none",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "#fafafa")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "transparent")
-              }
+              className={`grid grid-cols-5 px-5 py-3.5 items-center hover:bg-slate-50 transition-colors
+                ${i < filtered.length - 1 ? "border-b border-slate-50" : ""}`}
             >
-              {/* Patient */}
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "10px" }}
-              >
-                <div
-                  style={{
-                    width: "34px",
-                    height: "34px",
-                    borderRadius: "50%",
-                    background: "#e3f0fc",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "13px",
-                    fontWeight: "700",
-                    color: "#1565c0",
-                    flexShrink: 0,
-                  }}
-                >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-xs font-bold text-primary-500 flex-shrink-0">
                   {a.patient_name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#0f172a",
-                      margin: 0,
-                    }}
-                  >
+                  <p className="text-sm font-semibold text-slate-900">
                     {a.patient_name}
                   </p>
-                  <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>
+                  <p className="text-xs text-slate-400">
                     {a.reason || "General"}
                   </p>
                 </div>
               </div>
-
-              {/* Doctor */}
-              <p style={{ fontSize: "14px", color: "#475569", margin: 0 }}>
-                {a.doctor_name}
-              </p>
-
-              {/* Time */}
-              <p
-                style={{
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  color: "#0f172a",
-                  margin: 0,
-                }}
-              >
+              <p className="text-sm text-slate-500">{a.doctor_name}</p>
+              <p className="text-sm font-semibold text-slate-700">
                 {new Date(a.start_time).toLocaleTimeString("en-PK", {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
               </p>
-
-              {/* Status */}
-              <span
-                style={{
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  padding: "3px 10px",
-                  borderRadius: "20px",
-                  display: "inline-block",
-                  background: STATUS_COLORS[a.status]?.bg,
-                  color: STATUS_COLORS[a.status]?.color,
-                }}
-              >
+              <span className={`${STATUS_COLORS[a.status]} w-fit`}>
                 {a.status}
               </span>
-
-              {/* Actions */}
-              <div style={{ display: "flex", gap: "6px" }}>
+              <div className="flex gap-1.5">
                 {a.status === "scheduled" && (
                   <>
                     <button
                       onClick={() => handleStatus(a.id, "completed")}
-                      title="Mark completed"
-                      style={{
-                        padding: "5px 10px",
-                        borderRadius: "7px",
-                        border: "1px solid #d1fae5",
-                        background: "#ecfdf5",
-                        color: "#059669",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        cursor: "pointer",
-                      }}
+                      className="px-2.5 py-1 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 text-xs font-bold hover:bg-emerald-100 transition-colors"
                     >
                       ✓ Done
                     </button>
                     <button
                       onClick={() => handleCancel(a.id)}
-                      title="Cancel"
-                      style={{
-                        padding: "5px 10px",
-                        borderRadius: "7px",
-                        border: "1px solid #fee2e2",
-                        background: "#fef2f2",
-                        color: "#dc2626",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        cursor: "pointer",
-                      }}
+                      className="px-2.5 py-1 rounded-lg border border-red-200 bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition-colors"
                     >
-                      ✕ Cancel
+                      ✕
+                    </button>
+                    <button
+                      onClick={() => handleStatus(a.id, "no_show")}
+                      className="px-2.5 py-1 rounded-lg border border-amber-200 bg-amber-50 text-amber-600 text-xs font-bold hover:bg-amber-100 transition-colors"
+                    >
+                      No Show
                     </button>
                   </>
-                )}
-                {a.status === "scheduled" && (
-                  <button
-                    onClick={() => handleStatus(a.id, "no_show")}
-                    title="No show"
-                    style={{
-                      padding: "5px 10px",
-                      borderRadius: "7px",
-                      border: "1px solid #fde68a",
-                      background: "#fffbeb",
-                      color: "#d97706",
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                    }}
-                  >
-                    No Show
-                  </button>
                 )}
               </div>
             </div>
@@ -468,52 +266,12 @@ export default function Appointments() {
         )}
       </div>
 
-      {/* ── Book Modal ── */}
+      {/* Modal */}
       {showModal && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 50,
-            padding: "20px",
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              borderRadius: "16px",
-              width: "100%",
-              maxWidth: "480px",
-              maxHeight: "85vh",
-              overflow: "auto",
-            }}
-          >
-            {/* Modal header */}
-            <div
-              style={{
-                padding: "20px 24px",
-                borderBottom: "1px solid #f1f5f9",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                position: "sticky",
-                top: 0,
-                background: "white",
-                zIndex: 1,
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: "17px",
-                  fontWeight: "700",
-                  color: "#0f172a",
-                  margin: 0,
-                }}
-              >
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+              <h2 className="text-base font-bold text-slate-900">
                 Book Appointment
               </h2>
               <button
@@ -522,39 +280,22 @@ export default function Appointments() {
                   setForm(emptyForm);
                   setAvailableSlots([]);
                 }}
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "8px",
-                  border: "1px solid #e2e8f0",
-                  background: "white",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
               >
-                <X size={16} color="#64748b" />
+                <X size={15} className="text-slate-500" />
               </button>
             </div>
-
-            <div
-              style={{
-                padding: "24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px",
-              }}
-            >
-              {/* Doctor */}
+            <div className="p-6 flex flex-col gap-4">
               <div>
-                <label style={labelStyle}>Doctor *</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  Doctor *
+                </label>
                 <select
                   value={form.doctor_id}
                   onChange={(e) =>
                     handleFormChange("doctor_id", e.target.value)
                   }
-                  style={inputStyle}
+                  className="input"
                 >
                   <option value="">Select doctor</option>
                   {doctors.map((d) => (
@@ -565,46 +306,34 @@ export default function Appointments() {
                 </select>
               </div>
 
-              {/* Date */}
               <div>
-                <label style={labelStyle}>Date *</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  Date *
+                </label>
                 <input
                   type="date"
                   value={form.date}
                   onChange={(e) => handleFormChange("date", e.target.value)}
                   min={new Date().toISOString().split("T")[0]}
-                  style={inputStyle}
+                  className="input"
                 />
               </div>
 
-              {/* Time slots */}
               {(loadingSlots || availableSlots.length > 0) && (
                 <div>
-                  <label style={labelStyle}>Available Slots *</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                    Available Slots *
+                  </label>
                   {loadingSlots ? (
-                    <p style={{ fontSize: "13px", color: "#94a3b8" }}>
-                      Loading slots...
-                    </p>
+                    <p className="text-xs text-slate-400">Loading slots...</p>
                   ) : (
-                    <div
-                      style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}
-                    >
+                    <div className="flex flex-wrap gap-2">
                       {availableSlots.map((slot) => (
                         <button
                           key={slot}
                           onClick={() => setForm((f) => ({ ...f, time: slot }))}
-                          style={{
-                            padding: "7px 14px",
-                            borderRadius: "8px",
-                            border: "none",
-                            fontSize: "13px",
-                            fontWeight: "600",
-                            cursor: "pointer",
-                            background:
-                              form.time === slot ? "#1565c0" : "#f1f5f9",
-                            color: form.time === slot ? "white" : "#475569",
-                            transition: "all 0.15s",
-                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all
+                            ${form.time === slot ? "bg-primary-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
                         >
                           {fmt12(slot)}
                         </button>
@@ -614,61 +343,52 @@ export default function Appointments() {
                 </div>
               )}
 
-              {/* Patient Name */}
               <div>
-                <label style={labelStyle}>Patient Name *</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  Patient Name *
+                </label>
                 <input
                   value={form.patient_name}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, patient_name: e.target.value }))
                   }
                   placeholder="Ahmed Ali"
-                  style={inputStyle}
+                  className="input"
                 />
               </div>
 
-              {/* Phone */}
               <div>
-                <label style={labelStyle}>Patient Phone</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  Phone
+                </label>
                 <input
                   value={form.patient_phone}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, patient_phone: e.target.value }))
                   }
                   placeholder="0300-1234567"
-                  style={inputStyle}
+                  className="input"
                 />
               </div>
 
-              {/* Reason */}
               <div>
-                <label style={labelStyle}>Reason</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  Reason
+                </label>
                 <input
                   value={form.reason}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, reason: e.target.value }))
                   }
-                  placeholder="Fever, checkup, follow-up..."
-                  style={inputStyle}
+                  placeholder="Fever, checkup..."
+                  className="input"
                 />
               </div>
 
               <button
                 onClick={handleBook}
                 disabled={saving}
-                style={{
-                  width: "100%",
-                  padding: "13px",
-                  background: "#1565c0",
-                  border: "none",
-                  borderRadius: "9px",
-                  color: "white",
-                  fontSize: "15px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  opacity: saving ? 0.7 : 1,
-                  marginTop: "4px",
-                }}
+                className="btn-primary w-full justify-center py-3 text-base disabled:opacity-70"
               >
                 {saving ? "Booking..." : "Book Appointment"}
               </button>
@@ -679,25 +399,3 @@ export default function Appointments() {
     </div>
   );
 }
-
-const labelStyle = {
-  fontSize: "11px",
-  fontWeight: "600",
-  color: "#64748b",
-  textTransform: "uppercase",
-  letterSpacing: "0.5px",
-  display: "block",
-  marginBottom: "6px",
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  border: "1px solid #e2e8f0",
-  borderRadius: "9px",
-  fontSize: "14px",
-  color: "#0f172a",
-  outline: "none",
-  background: "white",
-  boxSizing: "border-box",
-};
