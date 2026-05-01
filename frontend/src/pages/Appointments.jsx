@@ -29,7 +29,7 @@ export default function Appointments() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [filterDate, setFilterDate] = useState(
-    new Date().toISOString().split("T")[0],
+    new Date().toLocaleDateString("en-CA"),
   );
   const [search, setSearch] = useState("");
 
@@ -314,7 +314,8 @@ export default function Appointments() {
                   type="date"
                   value={form.date}
                   onChange={(e) => handleFormChange("date", e.target.value)}
-                  min={new Date().toISOString().split("T")[0]}
+                  // min date for date input
+                  min={new Date().toLocaleDateString("en-CA")}
                   className="input"
                 />
               </div>

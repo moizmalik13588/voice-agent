@@ -37,7 +37,7 @@ export default function Dashboard() {
   const [doctors, setDoctors] = useState([]);
   const [weekData, setWeekData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toLocaleDateString("en-CA"); // "2026-05-02" format
 
   useEffect(() => {
     const fetchAll = async () => {

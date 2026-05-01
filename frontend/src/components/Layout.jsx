@@ -5,6 +5,8 @@ import {
   Calendar,
   LogOut,
   Building2,
+  UserRound,
+  PhoneCall,
 } from "lucide-react";
 import { getHospital, logout } from "../store/auth";
 
@@ -12,6 +14,8 @@ const NAV = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/doctors", icon: Users, label: "Doctors" },
   { to: "/appointments", icon: Calendar, label: "Appointments" },
+  { to: "/patients", icon: UserRound, label: "Patients" },
+  { to: "/call-logs", icon: PhoneCall, label: "Call Logs" },
 ];
 
 export default function Layout({ children }) {
