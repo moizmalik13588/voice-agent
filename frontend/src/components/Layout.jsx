@@ -7,6 +7,7 @@ import {
   Building2,
   UserRound,
   PhoneCall,
+  BarChart2,
 } from "lucide-react";
 import { getHospital, logout } from "../store/auth";
 
@@ -16,6 +17,7 @@ const NAV = [
   { to: "/appointments", icon: Calendar, label: "Appointments" },
   { to: "/patients", icon: UserRound, label: "Patients" },
   { to: "/call-logs", icon: PhoneCall, label: "Call Logs" },
+  { to: "/analytics", icon: BarChart2, label: "Analytics" },
 ];
 
 export default function Layout({ children }) {
