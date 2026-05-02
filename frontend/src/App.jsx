@@ -11,6 +11,8 @@ import Patients from "./pages/Patients";
 import CallLogs from "./pages/CallLogs";
 import Analytics from "./pages/Analytics";
 import Revenue from "./pages/Revenue";
+import Recall from "./pages/Recall";
+import NoShow from "./pages/NoShow";
 
 function Protected({ children }) {
   return isLoggedIn() ? children : <Navigate to="/login" replace />;
@@ -88,6 +90,26 @@ export default function App() {
             <Protected>
               <Layout>
                 <Revenue />
+              </Layout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/recall"
+          element={
+            <Protected>
+              <Layout>
+                <Recall />
+              </Layout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/noshow"
+          element={
+            <Protected>
+              <Layout>
+                <NoShow />
               </Layout>
             </Protected>
           }

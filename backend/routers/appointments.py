@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from database import get_db
 from models import Appointment, AppointmentStatus, Doctor, DoctorAvailability
 from auth import get_hospital
-from services.whatsapp import send_appointment_confirmation
+from services.whatsapp import send_appointment_confirmation, send_appointment_cancellation
 
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
 
@@ -212,6 +212,13 @@ def cancel_appointment(
     appointment = _get_appointment_or_404(appointment_id, hospital.id, db)
     appointment.status = AppointmentStatus.canceled
     db.commit()
+    if appointment.patient_phone:
+        send_appointment_cancellation(
+        patient_name=appointment.patient_name,
+        phone=appointment.patient_phone,
+        doctor_name=appointment.doctor.name,
+        appointment_time=appointment.start_time.strftime("%A, %B %d at %I:%M %p")
+    )
     return {"message": "Appointment canceled successfully"}
 
 

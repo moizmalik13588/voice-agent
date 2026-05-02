@@ -9,6 +9,8 @@ import {
   PhoneCall,
   BarChart2,
   PiggyBank,
+  BellRing,
+  ShieldAlert,
 } from "lucide-react";
 import { getHospital, logout } from "../store/auth";
 
@@ -20,6 +22,8 @@ const NAV = [
   { to: "/call-logs", icon: PhoneCall, label: "Call Logs" },
   { to: "/analytics", icon: BarChart2, label: "Analytics" },
   { to: "/revenue", icon: PiggyBank, label: "Revenue" },
+  { to: "/recall", icon: BellRing, label: "Auto Recall" },
+  { to: "/noshow", icon: ShieldAlert, label: "No-Show" },
 ];
 
 export default function Layout({ children }) {
