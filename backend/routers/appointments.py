@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from database import get_db
 from models import Appointment, AppointmentStatus, Doctor, DoctorAvailability
 from auth import get_hospital
+from services.whatsapp import send_appointment_confirmation
 
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
 
@@ -154,11 +155,21 @@ def book_appointment(
         start_time=request.start_time,
         end_time=end_time,
     )
+
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
 
+    if appointment.patient_phone:
+        send_appointment_confirmation(
+        patient_name=appointment.patient_name,
+        phone=appointment.patient_phone,
+        doctor_name=doctor.name,
+        appointment_time=appointment.start_time.strftime("%A, %B %d at %I:%M %p")
+    )
+
     return _format_appointment(appointment, doctor.name)
+
 
 
 # List appointments
