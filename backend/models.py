@@ -92,3 +92,17 @@ class Appointment(Base):
 
     hospital = relationship("Hospital", back_populates="appointments")
     doctor = relationship("Doctor", back_populates="appointments")
+
+
+class PatientNote(Base):
+    __tablename__ = "patient_notes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    hospital_id = Column(Integer, ForeignKey("hospitals.id"), nullable=False)
+    patient_name = Column(String, nullable=False, index=True)
+    note = Column(String, nullable=False)
+    note_type = Column(String, default="general")  # general, diagnosis, medication, allergy
+    created_by = Column(String, nullable=True)  # doctor name
+    created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.timezone.utc))
+
+    hospital = relationship("Hospital", backref="patient_notes")

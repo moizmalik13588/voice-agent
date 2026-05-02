@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
-from routers import hospitals, doctors, appointments, vapi, patients, call_logs, analytics, revenue, recall, noshow
+from routers import hospitals, doctors, appointments, vapi, patients, call_logs, analytics, revenue, recall, noshow, medical
 from services.scheduler import start_scheduler, stop_scheduler
 from contextlib import asynccontextmanager
 
@@ -35,6 +35,7 @@ app.include_router(analytics.router)
 app.include_router(revenue.router)
 app.include_router(recall.router)
 app.include_router(noshow.router)
+app.include_router(medical.router)
 import uvicorn
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

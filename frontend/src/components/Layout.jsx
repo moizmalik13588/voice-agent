@@ -11,6 +11,7 @@ import {
   PiggyBank,
   BellRing,
   ShieldAlert,
+  FileHeart,
 } from "lucide-react";
 import { getHospital, logout } from "../store/auth";
 
@@ -24,6 +25,7 @@ const NAV = [
   { to: "/revenue", icon: PiggyBank, label: "Revenue" },
   { to: "/recall", icon: BellRing, label: "Auto Recall" },
   { to: "/noshow", icon: ShieldAlert, label: "No-Show" },
+  { to: "/medical", icon: FileHeart, label: "Medical" },
 ];
 
 export default function Layout({ children }) {
