@@ -30,6 +30,7 @@ const emptyForm = {
   specialty: "",
   email: "",
   phone: "",
+  consultation_fee: 1000,
   availability: [],
 };
 
@@ -67,6 +68,7 @@ export default function Doctors() {
       specialty: doc.specialty,
       email: doc.email || "",
       phone: doc.phone || "",
+      consultation_fee: doc.consultation_fee || 1000,
       availability: doc.availability.map((a) => ({
         day_of_week: a.day_of_week,
         start_time: a.start_time,
@@ -176,7 +178,7 @@ export default function Doctors() {
                     </div>
                     <div>
                       <p className="text-sm font-bold text-slate-900">
-                        Dr. {doc.name}
+                        {doc.name}
                       </p>
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary-50 text-primary-500">
                         {doc.specialty}
@@ -218,6 +220,14 @@ export default function Doctors() {
                 </div>
               </div>
               <div className="p-4">
+                {/* Fee Badge */}
+                <div className="flex items-center gap-1.5 mb-3 pb-3 border-b border-slate-50">
+                  <span className="text-sm font-bold text-emerald-600">
+                    Rs. {doc.consultation_fee?.toLocaleString() || "1,000"}
+                  </span>
+                  <span className="text-xs text-slate-400">per visit</span>
+                </div>
+
                 <div className="flex items-center gap-1.5 mb-2">
                   <Clock size={12} className="text-slate-400" />
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
@@ -292,6 +302,7 @@ export default function Doctors() {
                   ))}
                 </select>
               </div>
+
               {/* Phone + Email */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -318,6 +329,29 @@ export default function Doctors() {
                     }
                     placeholder="dr@hospital.com"
                     className="input"
+                  />
+                </div>
+              </div>
+              {/* Consultation Fee */}
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  Consultation Fee (PKR)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
+                    Rs.
+                  </span>
+                  <input
+                    type="number"
+                    value={form.consultation_fee}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        consultation_fee: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="1000"
+                    className="input pl-10"
                   />
                 </div>
               </div>

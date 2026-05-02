@@ -263,7 +263,7 @@ export default function Analytics() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-900">
-                        Dr. {doc.name}
+                        {doc.name}
                       </p>
                       <p className="text-xs text-slate-400">{doc.specialty}</p>
                     </div>

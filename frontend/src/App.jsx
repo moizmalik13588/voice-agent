@@ -10,6 +10,7 @@ import Appointments from "./pages/Appointments";
 import Patients from "./pages/Patients";
 import CallLogs from "./pages/CallLogs";
 import Analytics from "./pages/Analytics";
+import Revenue from "./pages/Revenue";
 
 function Protected({ children }) {
   return isLoggedIn() ? children : <Navigate to="/login" replace />;
@@ -77,6 +78,16 @@ export default function App() {
             <Protected>
               <Layout>
                 <Analytics />
+              </Layout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/revenue"
+          element={
+            <Protected>
+              <Layout>
+                <Revenue />
               </Layout>
             </Protected>
           }

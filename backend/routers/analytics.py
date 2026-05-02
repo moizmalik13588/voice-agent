@@ -97,17 +97,26 @@ def popular_doctors(db: Session = Depends(get_db), hospital=Depends(get_hospital
         .order_by(func.count(Appointment.id).desc())
     ).all()
 
-    return [
-        {
+    doctors_data = []
+    for r in results:
+        # Completed count alag query se
+        completed = db.execute(
+            select(func.count(Appointment.id))
+            .join(Doctor, Appointment.doctor_id == Doctor.id)
+            .where(Appointment.hospital_id == hospital.id)
+            .where(Doctor.name == r.name)
+            .where(Appointment.status == AppointmentStatus.completed)
+        ).scalar()
+
+        doctors_data.append({
             "name": r.name,
             "specialty": r.specialty,
             "total": r.total,
-            "completed": 0,
-            "completion_rate": 0,
-        }
-        for r in results
-    ]
+            "completed": completed or 0,
+            "completion_rate": round((completed or 0) / r.total * 100, 1) if r.total > 0 else 0,
+        })
 
+    return doctors_data
 
 @router.get("/busy-hours")
 def busy_hours(db: Session = Depends(get_db), hospital=Depends(get_hospital)):

@@ -46,13 +46,13 @@ class Hospital(Base):
 # ─── Doctor ───────────────────────────────────────────
 class Doctor(Base):
     __tablename__ = "doctors"
-
     id = Column(Integer, primary_key=True, index=True)
     hospital_id = Column(Integer, ForeignKey("hospitals.id"), nullable=False)
     name = Column(String, nullable=False)
     specialty = Column(String, nullable=False)
     email = Column(String, nullable=True)
     phone = Column(String, nullable=True)
+    consultation_fee = Column(Integer, default=1000)  # ← add karo
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.timezone.utc))
 

@@ -8,6 +8,7 @@ import {
   UserRound,
   PhoneCall,
   BarChart2,
+  PiggyBank,
 } from "lucide-react";
 import { getHospital, logout } from "../store/auth";
 
@@ -18,6 +19,7 @@ const NAV = [
   { to: "/patients", icon: UserRound, label: "Patients" },
   { to: "/call-logs", icon: PhoneCall, label: "Call Logs" },
   { to: "/analytics", icon: BarChart2, label: "Analytics" },
+  { to: "/revenue", icon: PiggyBank, label: "Revenue" },
 ];
 
 export default function Layout({ children }) {

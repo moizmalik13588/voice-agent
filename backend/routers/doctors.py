@@ -21,6 +21,7 @@ class DoctorCreateRequest(BaseModel):
     specialty: str
     email: str | None = None
     phone: str | None = None
+    consultation_fee: int = 1000  # ← add karo
     availability: list[AvailabilitySchema] = []
 
 class AvailabilityResponse(BaseModel):
