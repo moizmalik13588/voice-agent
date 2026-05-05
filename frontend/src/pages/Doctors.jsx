@@ -8,6 +8,7 @@ import {
   Mail,
   Trash2,
   Edit2,
+  Key,
 } from "lucide-react";
 import api from "../api/axios";
 import toast from "react-hot-toast";
@@ -41,6 +42,34 @@ export default function Doctors() {
   const [editDoctor, setEditDoctor] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    doctor_id: null,
+    login_email: "",
+    password: "",
+  });
+  const [settingPassword, setSettingPassword] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    doctor: null,
+  });
+
+  const handleSetPassword = async () => {
+    if (!passwordForm.login_email || !passwordForm.password)
+      return toast.error("Fill all fields");
+    setSettingPassword(true);
+    try {
+      await api.post("/doctor-auth/set-password", passwordForm);
+      toast.success("Doctor login credentials set!");
+      setShowPasswordModal(false);
+      fetchDoctors();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed");
+    } finally {
+      setSettingPassword(false);
+    }
+  };
 
   useEffect(() => {
     fetchDoctors();
@@ -124,11 +153,11 @@ export default function Doctors() {
     }
   };
 
-  const handleDeactivate = async (doc) => {
-    if (!confirm(`Deactivate Dr. ${doc.name}?`)) return;
+  const handleDeactivate = async () => {
     try {
-      await api.delete(`/doctors/${doc.id}`);
-      toast.success("Deactivated");
+      await api.delete(`/doctors/${confirmModal.doctor.id}`);
+      toast.success("Doctor deactivated");
+      setConfirmModal({ open: false, doctor: null });
       fetchDoctors();
     } catch {
       toast.error("Failed");
@@ -193,8 +222,23 @@ export default function Doctors() {
                       <Edit2 size={13} className="text-slate-500" />
                     </button>
                     <button
-                      onClick={() => handleDeactivate(doc)}
-                      className="w-8 h-8 rounded-lg border border-red-100 bg-red-50 flex items-center justify-center hover:bg-red-100 transition-colors"
+                      onClick={() => {
+                        setPasswordForm({
+                          doctor_id: doc.id,
+                          login_email: doc.login_email || "",
+                          password: "",
+                        });
+                        setShowPasswordModal(true);
+                      }}
+                      className="w-8 h-8 rounded-lg border border-violet-100 bg-violet-50 flex items-center justify-center hover:bg-violet-100 transition-colors"
+                      title="Set login credentials"
+                    >
+                      <Key size={13} className="text-violet-500" />
+                    </button>
+                    <button
+                      onClick={() =>
+                        setConfirmModal({ open: true, doctor: doc })
+                      }
                     >
                       <Trash2 size={13} className="text-red-500" />
                     </button>
@@ -256,8 +300,8 @@ export default function Doctors() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-auto">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] z-[101] overflow-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h2 className="text-base font-bold text-slate-900">
                 {editDoctor ? "Edit Doctor" : "Add Doctor"}
@@ -447,6 +491,98 @@ export default function Doctors() {
           </div>
         </div>
       )}
+      {/* ── Set Password Modal ── */}
+      {showPasswordModal && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200] p-4"
+          onClick={(e) =>
+            e.target === e.currentTarget && setShowPasswordModal(false)
+          }
+        >
+          <div className="bg-white rounded-2xl w-full max-w-sm">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900">
+                Set Doctor Login
+              </h2>
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+              >
+                <X size={15} className="text-slate-500" />
+              </button>
+            </div>
+            <div className="p-6 flex flex-col gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  Login Email
+                </label>
+                <input
+                  key={showPasswordModal ? "email-open" : "email-closed"}
+                  value={passwordForm.login_email}
+                  onChange={(e) =>
+                    setPasswordForm((f) => ({
+                      ...f,
+                      login_email: e.target.value,
+                    }))
+                  }
+                  placeholder="doctor@email.com"
+                  autoComplete="new-email"
+                  name="new-email"
+                  type="email"
+                  className="input"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  Password
+                </label>
+                {/* ✅ Controlled input — no type="password" */}
+                <input
+                  key={showPasswordModal ? "pass-open" : "pass-closed"}
+                  value={passwordForm.password}
+                  onChange={(e) =>
+                    setPasswordForm((f) => ({ ...f, password: e.target.value }))
+                  }
+                  placeholder="Min 8 characters"
+                  autoComplete="new-password"
+                  name="new-password"
+                  type="password"
+                  className="input"
+                />
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+                <p className="text-xs text-blue-700">
+                  Doctor can login at <strong>/doctor/login</strong> with these
+                  credentials.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSetPassword}
+                  disabled={settingPassword}
+                  className="btn-primary flex-1 justify-center disabled:opacity-70"
+                >
+                  {settingPassword ? "Saving..." : "Set Credentials"}
+                </button>
+                <button
+                  onClick={() => setShowPasswordModal(false)}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, doctor: null })}
+        onConfirm={handleDeactivate}
+        title="Deactivate Doctor"
+        message={`Are you sure you want to deactivate Dr. ${confirmModal.doctor?.name}?`}
+        confirmText="Yes, Deactivate"
+      />
     </div>
   );
 }

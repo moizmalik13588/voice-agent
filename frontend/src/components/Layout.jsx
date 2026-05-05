@@ -1,4 +1,6 @@
+import { useEffect, useState, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import api from "../api/axios";
 import {
   LayoutDashboard,
   Users,
@@ -12,6 +14,9 @@ import {
   BellRing,
   ShieldAlert,
   FileHeart,
+  CreditCard,
+  Settings,
+  Bell,
 } from "lucide-react";
 import { getHospital, logout } from "../store/auth";
 
@@ -26,11 +31,46 @@ const NAV = [
   { to: "/recall", icon: BellRing, label: "Auto Recall" },
   { to: "/noshow", icon: ShieldAlert, label: "No-Show" },
   { to: "/medical", icon: FileHeart, label: "Medical" },
+  { to: "/payments", icon: CreditCard, label: "Payments" },
+  { to: "/settings", icon: Settings, label: "Settings" },
 ];
 
 export default function Layout({ children }) {
   const navigate = useNavigate();
   const hospital = getHospital();
+  const [notifs, setNotifs] = useState([]);
+  const [unread, setUnread] = useState(0);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const bellRef = useRef(null);
+
+  useEffect(() => {
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchUnread = async () => {
+    try {
+      const res = await api.get("/notifications/unread-count");
+      setUnread(res.data.count);
+    } catch {}
+  };
+
+  const fetchNotifs = async () => {
+    try {
+      const res = await api.get("/notifications/");
+      setNotifs(res.data);
+    } catch {}
+  };
+
+  const toggleBell = async () => {
+    setShowNotifs(!showNotifs);
+    if (!showNotifs) {
+      await fetchNotifs();
+      await api.patch("/notifications/read-all");
+      setUnread(0);
+    }
+  };
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -112,7 +152,58 @@ export default function Layout({ children }) {
       </aside>
 
       {/* ── Main ── */}
-      <main className="flex-1 overflow-auto bg-surface">{children}</main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header with Bell */}
+        <div className="h-14 bg-white border-b border-slate-100 flex items-center justify-end px-6 flex-shrink-0 relative">
+          <button
+            ref={bellRef}
+            onClick={toggleBell}
+            className="relative w-9 h-9 rounded-xl border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 transition-colors"
+          >
+            <Bell size={16} className="text-slate-500" />
+            {unread > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </button>
+
+          {/* Dropdown */}
+          {showNotifs && (
+            <div className="absolute top-12 right-4 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-100">
+                <p className="text-sm font-bold text-slate-900">
+                  Notifications
+                </p>
+              </div>
+              <div className="max-h-80 overflow-auto">
+                {notifs.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <Bell size={24} className="text-slate-200 mx-auto mb-2" />
+                    <p className="text-sm text-slate-400">No notifications</p>
+                  </div>
+                ) : (
+                  notifs.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors
+                        ${!n.is_read ? "bg-primary-50/50" : ""}`}
+                    >
+                      <p className="text-sm text-slate-700">{n.message}</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {new Date(n.created_at).toLocaleString("en-PK")}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-auto bg-surface">{children}</main>
+      </div>
     </div>
   );
 }

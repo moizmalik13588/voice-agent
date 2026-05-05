@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Key, Building2, Phone, Mail, ArrowRight } from "lucide-react";
 import api from "../api/axios";
 import { saveAuth } from "../store/auth";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function Login() {
   const [tab, setTab] = useState("login");
@@ -19,7 +19,7 @@ export default function Login() {
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleLogin = async () => {
-    if (!form.api_key) return toast.error("API Key required");
+    if (!form.api_key) return toast.error("API Key is required");
     setLoading(true);
     try {
       localStorage.setItem("api_key", form.api_key);
@@ -28,8 +28,18 @@ export default function Login() {
       toast.success(`Welcome, ${res.data.name}!`);
       navigate("/");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Invalid API Key");
       localStorage.removeItem("api_key");
+
+      // Proper error messages
+      if (err.response?.status === 401) {
+        toast.error("Invalid API Key — please check and try again");
+      } else if (err.response?.status === 404) {
+        toast.error("Hospital not found");
+      } else if (err.code === "ERR_NETWORK") {
+        toast.error("Cannot connect to server — please try again");
+      } else {
+        toast.error(err.response?.data?.detail || "Something went wrong");
+      }
     } finally {
       setLoading(false);
     }
@@ -57,6 +67,31 @@ export default function Login() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          error: {
+            duration: 4000,
+            style: {
+              background: "#fef2f2",
+              color: "#dc2626",
+              border: "1px solid #fecaca",
+              fontWeight: "600",
+              fontSize: "14px",
+            },
+          },
+          success: {
+            duration: 3000,
+            style: {
+              background: "#f0fdf4",
+              color: "#16a34a",
+              border: "1px solid #bbf7d0",
+              fontWeight: "600",
+              fontSize: "14px",
+            },
+          },
+        }}
+      />
       {/* ── LEFT ── */}
       <div className="flex-1 bg-surface flex flex-col items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-sm">

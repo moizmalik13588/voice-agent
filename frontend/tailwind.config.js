@@ -19,6 +19,10 @@ export default {
           purple: "#a78bfa",
         },
       },
+      fontFamily: {
+        sans: ["DM Sans", "sans-serif"], // ← add karo
+        display: ["Playfair Display", "serif"], // ← add karo
+      },
     },
   },
   plugins: [],

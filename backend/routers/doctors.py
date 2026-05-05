@@ -41,6 +41,7 @@ class DoctorResponse(BaseModel):
     email: str | None
     phone: str | None
     is_active: bool
+    login_email: str | None = None
     availability: list[AvailabilityResponse] = []
 
     class Config:
@@ -183,6 +184,7 @@ def _format_doctor(doctor: Doctor) -> dict:
         "email": doctor.email,
         "phone": doctor.phone,
         "is_active": doctor.is_active,
+        "login_email": doctor.login_email,
         "availability": [
             {
                 "id": a.id,

@@ -52,14 +52,16 @@ class Doctor(Base):
     specialty = Column(String, nullable=False)
     email = Column(String, nullable=True)
     phone = Column(String, nullable=True)
-    consultation_fee = Column(Integer, default=1000)  # ← add karo
+    consultation_fee = Column(Integer, default=1000)
     is_active = Column(Boolean, default=True)
+    # ── New fields ──
+    login_email = Column(String, unique=True, nullable=True, index=True)
+    login_password = Column(String, nullable=True)  # hashed
     created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.timezone.utc))
 
     hospital = relationship("Hospital", back_populates="doctors")
     availability = relationship("DoctorAvailability", back_populates="doctor")
     appointments = relationship("Appointment", back_populates="doctor")
-
 
 # ─── Doctor Availability ──────────────────────────────
 class DoctorAvailability(Base):
@@ -85,6 +87,7 @@ class Appointment(Base):
     patient_name = Column(String, nullable=False, index=True)
     patient_phone = Column(String, nullable=True)
     reason = Column(String, nullable=True)
+    patient_email = Column(String, nullable=True)
     start_time = Column(DateTime, nullable=False, index=True)
     end_time = Column(DateTime, nullable=False)
     status = Column(Enum(AppointmentStatus), default=AppointmentStatus.scheduled)
@@ -106,3 +109,13 @@ class PatientNote(Base):
     created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.timezone.utc))
 
     hospital = relationship("Hospital", backref="patient_notes")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True)
+    hospital_id = Column(Integer, ForeignKey("hospitals.id"))
+    message = Column(String, nullable=False)
+    type = Column(String, default="info")
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=dt.datetime.now)

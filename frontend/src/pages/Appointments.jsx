@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Calendar, Plus, X, Search, Filter } from "lucide-react";
 import api from "../api/axios";
 import toast from "react-hot-toast";
+import ConfirmModal from "../components/ConfirmModal";
 
 const STATUS_COLORS = {
   scheduled: "badge-scheduled",
@@ -14,6 +15,7 @@ const emptyForm = {
   doctor_id: "",
   patient_name: "",
   patient_phone: "",
+  patient_email: "",
   reason: "",
   date: "",
   time: "",
@@ -32,6 +34,10 @@ export default function Appointments() {
     new Date().toLocaleDateString("en-CA"),
   );
   const [search, setSearch] = useState("");
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    appointmentId: null,
+  });
 
   useEffect(() => {
     fetchDoctors();
@@ -95,6 +101,7 @@ export default function Appointments() {
         doctor_id: parseInt(form.doctor_id),
         patient_name: form.patient_name,
         patient_phone: form.patient_phone || undefined,
+        patient_email: form.patient_email || undefined,
         reason: form.reason || undefined,
         start_time: `${form.date}T${form.time}:00`,
       });
@@ -110,14 +117,14 @@ export default function Appointments() {
     }
   };
 
-  const handleCancel = async (id) => {
-    if (!confirm("Cancel this appointment?")) return;
+  const handleCancel = async () => {
     try {
-      await api.patch(`/appointments/${id}/cancel`);
-      toast.success("Canceled");
+      await api.patch(`/appointments/${confirmModal.appointmentId}/cancel`);
+      toast.success("Appointment canceled");
+      setConfirmModal({ open: false, appointmentId: null });
       fetchAppointments();
     } catch {
-      toast.error("Failed");
+      toast.error("Failed to cancel");
     }
   };
 
@@ -247,10 +254,11 @@ export default function Appointments() {
                       ✓ Done
                     </button>
                     <button
-                      onClick={() => handleCancel(a.id)}
-                      className="px-2.5 py-1 rounded-lg border border-red-200 bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition-colors"
+                      onClick={() =>
+                        setConfirmModal({ open: true, appointmentId: a.id })
+                      }
                     >
-                      ✕
+                      ✕ Cancel
                     </button>
                     <button
                       onClick={() => handleStatus(a.id, "no_show")}
@@ -300,7 +308,7 @@ export default function Appointments() {
                   <option value="">Select doctor</option>
                   {doctors.map((d) => (
                     <option key={d.id} value={d.id}>
-                      Dr. {d.name} — {d.specialty}
+                      {d.name} — {d.specialty}
                     </option>
                   ))}
                 </select>
@@ -371,7 +379,21 @@ export default function Appointments() {
                   className="input"
                 />
               </div>
-
+              {/* Email */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  Patient Email
+                </label>
+                <input
+                  value={form.patient_email}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, patient_email: e.target.value }))
+                  }
+                  type="email"
+                  placeholder="patient@gmail.com"
+                  className="input"
+                />
+              </div>
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
                   Reason
@@ -397,6 +419,14 @@ export default function Appointments() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, appointmentId: null })}
+        onConfirm={handleCancel}
+        title="Cancel Appointment"
+        message="Are you sure you want to cancel this appointment? This action cannot be undone."
+        confirmText="Yes, Cancel"
+      />
     </div>
   );
 }

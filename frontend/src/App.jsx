@@ -14,15 +14,43 @@ import Revenue from "./pages/Revenue";
 import Recall from "./pages/Recall";
 import NoShow from "./pages/NoShow";
 import Medical from "./pages/Medical";
+import Payments from "./pages/Payments";
+import Settings from "./pages/Settings";
+import DoctorLogin from "./pages/DoctorLogin";
+import DoctorDashboard from "./pages/DoctorDashboard";
 
 function Protected({ children }) {
   return isLoggedIn() ? children : <Navigate to="/login" replace />;
 }
 
+function DoctorProtected({ children }) {
+  return localStorage.getItem("doctor_token") ? (
+    children
+  ) : (
+    <Navigate to="/doctor/login" replace />
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-center"
+        containerStyle={{ zIndex: 99999 }}
+        toastOptions={{
+          duration: 5000,
+          error: {
+            duration: 5000,
+            style: {
+              background: "#fee2e2",
+              color: "#dc2626",
+              fontWeight: "600",
+              border: "1px solid #fecaca",
+              borderRadius: "12px",
+            },
+          },
+        }}
+      />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route
@@ -123,6 +151,35 @@ export default function App() {
                 <Medical />
               </Layout>
             </Protected>
+          }
+        />
+        <Route
+          path="/payments"
+          element={
+            <Protected>
+              <Layout>
+                <Payments />
+              </Layout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <Protected>
+              <Layout>
+                <Settings />
+              </Layout>
+            </Protected>
+          }
+        />
+        <Route path="/doctor/login" element={<DoctorLogin />} />
+        <Route
+          path="/doctor/dashboard"
+          element={
+            <DoctorProtected>
+              <DoctorDashboard />
+            </DoctorProtected>
           }
         />
       </Routes>
