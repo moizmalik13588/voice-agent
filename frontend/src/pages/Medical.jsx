@@ -11,7 +11,6 @@ import {
   ClipboardList,
   RefreshCw,
   Calendar,
-  CheckCircle,
 } from "lucide-react";
 import api from "../api/axios";
 import toast from "react-hot-toast";
@@ -95,6 +94,7 @@ export default function Medical() {
     setLoadingMed(true);
     setMedData(null);
     setActiveTab("notes");
+    setShowNoteForm(false);
     try {
       const res = await api.get(`/medical/${encodeURIComponent(patient.name)}`);
       setMedData(res.data);
@@ -103,6 +103,11 @@ export default function Medical() {
     } finally {
       setLoadingMed(false);
     }
+  };
+
+  const refreshMed = async () => {
+    const res = await api.get(`/medical/${encodeURIComponent(selected.name)}`);
+    setMedData(res.data);
   };
 
   const addNote = async () => {
@@ -116,11 +121,7 @@ export default function Medical() {
       toast.success("Note added!");
       setNoteForm({ note: "", note_type: "general", created_by: "" });
       setShowNoteForm(false);
-      // Refresh medical data
-      const res = await api.get(
-        `/medical/${encodeURIComponent(selected.name)}`,
-      );
-      setMedData(res.data);
+      await refreshMed();
     } catch {
       toast.error("Failed to add note");
     } finally {
@@ -133,13 +134,16 @@ export default function Medical() {
     try {
       await api.delete(`/medical/notes/${noteId}`);
       toast.success("Note deleted");
-      const res = await api.get(
-        `/medical/${encodeURIComponent(selected.name)}`,
-      );
-      setMedData(res.data);
+      await refreshMed();
     } catch {
       toast.error("Failed to delete");
     }
+  };
+
+  const closeModal = () => {
+    setSelected(null);
+    setMedData(null);
+    setShowNoteForm(false);
   };
 
   const filtered = patients.filter(
@@ -152,10 +156,10 @@ export default function Medical() {
     NOTE_TYPES.find((t) => t.value === type) || NOTE_TYPES[0];
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-7">
-        <div>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* ── Header ── */}
+      <div className="mb-6">
+        <div className="mb-4">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-1">
             Medical History
           </h1>
@@ -163,8 +167,9 @@ export default function Medical() {
             {patients.length} patients · Click to view history
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 w-72">
-          <Search size={14} className="text-slate-400" />
+        {/* Search — full width */}
+        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 w-full sm:max-w-sm">
+          <Search size={14} className="text-slate-400 flex-shrink-0" />
           <input
             placeholder="Search patient..."
             value={search}
@@ -174,7 +179,7 @@ export default function Medical() {
         </div>
       </div>
 
-      {/* Patients Grid */}
+      {/* ── Patients Grid ── */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <RefreshCw size={24} className="animate-spin text-slate-300" />
@@ -185,27 +190,29 @@ export default function Medical() {
           <p className="text-slate-400">No patients found</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map((p) => (
             <div
               key={p.name}
               onClick={() => openPatient(p)}
-              className="card p-5 cursor-pointer hover:shadow-md hover:border-primary-100 transition-all"
+              className="card p-4 sm:p-5 cursor-pointer hover:shadow-md hover:border-primary-100 transition-all active:bg-slate-50"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-primary-50 flex items-center justify-center text-base font-bold text-primary-500">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-base font-bold text-primary-500 flex-shrink-0">
                     {p.name.charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{p.name}</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900 truncate">
+                      {p.name}
+                    </p>
                     <p className="text-xs text-slate-400">
                       {p.phone || "No phone"}
                     </p>
                   </div>
                 </div>
                 {p.note_count > 0 && (
-                  <div className="flex items-center gap-1.5 bg-primary-50 rounded-lg px-2.5 py-1">
+                  <div className="flex items-center gap-1.5 bg-primary-50 rounded-lg px-2.5 py-1 flex-shrink-0">
                     <FileText size={12} className="text-primary-500" />
                     <span className="text-xs font-bold text-primary-500">
                       {p.note_count}
@@ -218,18 +225,23 @@ export default function Medical() {
         </div>
       )}
 
-      {/* ── Patient Medical Modal ── */}
+      {/* ── Patient Medical Modal (bottom sheet on mobile) ── */}
       {selected && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-auto">
-            {/* Modal header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-sm font-bold text-primary-500">
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white w-full sm:rounded-2xl sm:max-w-2xl rounded-t-3xl max-h-[92vh] sm:max-h-[90vh] overflow-auto">
+            {/* Drag handle — mobile only */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
+            </div>
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-sm font-bold text-primary-500 flex-shrink-0">
                   {selected.name.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <h2 className="text-base font-bold text-slate-900">
+                <div className="min-w-0">
+                  <h2 className="text-base font-bold text-slate-900 truncate">
                     {selected.name}
                   </h2>
                   <p className="text-xs text-slate-400">
@@ -238,12 +250,8 @@ export default function Medical() {
                 </div>
               </div>
               <button
-                onClick={() => {
-                  setSelected(null);
-                  setMedData(null);
-                  setShowNoteForm(false);
-                }}
-                className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                onClick={closeModal}
+                className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 flex-shrink-0"
               >
                 <X size={15} className="text-slate-500" />
               </button>
@@ -260,10 +268,10 @@ export default function Medical() {
               medData && (
                 <>
                   {/* Stats */}
-                  <div className="grid grid-cols-3 gap-3 p-6 pb-0">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 p-5 pb-0">
                     {[
                       {
-                        label: "Completed Visits",
+                        label: "Completed",
                         value: medData.stats.total_visits,
                         color: "text-emerald-600",
                         bg: "bg-emerald-50",
@@ -296,12 +304,12 @@ export default function Medical() {
                   </div>
 
                   {/* Tabs */}
-                  <div className="flex bg-slate-100 rounded-xl p-1 mx-6 mt-4 mb-0 gap-1">
+                  <div className="flex bg-slate-100 rounded-xl p-1 mx-5 mt-4 gap-1">
                     {[
                       { id: "notes", label: `Notes (${medData.notes.length})` },
                       {
                         id: "visits",
-                        label: `Visit History (${medData.visits.length})`,
+                        label: `Visits (${medData.visits.length})`,
                       },
                     ].map((tab) => (
                       <button
@@ -315,29 +323,27 @@ export default function Medical() {
                     ))}
                   </div>
 
-                  <div className="p-6">
-                    {/* Notes Tab */}
+                  <div className="p-5">
+                    {/* ── Notes Tab ── */}
                     {activeTab === "notes" && (
                       <div>
-                        {/* Add note button */}
                         {!showNoteForm && (
                           <button
                             onClick={() => setShowNoteForm(true)}
-                            className="btn-primary mb-4"
+                            className="btn-primary mb-4 flex items-center gap-2"
                           >
                             <Plus size={15} /> Add Note
                           </button>
                         )}
 
-                        {/* Note form */}
                         {showNoteForm && (
                           <div className="bg-slate-50 rounded-xl p-4 mb-4 border border-slate-200">
                             <p className="text-sm font-bold text-slate-900 mb-3">
                               New Note
                             </p>
 
-                            {/* Note type */}
-                            <div className="flex gap-2 mb-3 flex-wrap">
+                            {/* Note type selector */}
+                            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-3">
                               {NOTE_TYPES.map((type) => (
                                 <button
                                   key={type.value}
@@ -347,7 +353,7 @@ export default function Medical() {
                                       note_type: type.value,
                                     }))
                                   }
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all
+                                  className={`flex items-center justify-center sm:justify-start gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold border transition-all
                                   ${
                                     noteForm.note_type === type.value
                                       ? `${type.bg} ${type.color} ${type.border}`
@@ -372,7 +378,6 @@ export default function Medical() {
                               rows={3}
                               className="input resize-none mb-3"
                             />
-
                             <input
                               value={noteForm.created_by}
                               onChange={(e) =>
@@ -384,18 +389,17 @@ export default function Medical() {
                               placeholder="Doctor name (optional)"
                               className="input mb-3"
                             />
-
                             <div className="flex gap-2">
                               <button
                                 onClick={addNote}
                                 disabled={saving}
-                                className="btn-primary disabled:opacity-70"
+                                className="btn-primary disabled:opacity-70 flex-1 sm:flex-none justify-center"
                               >
                                 {saving ? "Saving..." : "Save Note"}
                               </button>
                               <button
                                 onClick={() => setShowNoteForm(false)}
-                                className="btn-secondary"
+                                className="btn-secondary flex-1 sm:flex-none justify-center"
                               >
                                 Cancel
                               </button>
@@ -403,7 +407,6 @@ export default function Medical() {
                           </div>
                         )}
 
-                        {/* Notes list */}
                         {medData.notes.length === 0 ? (
                           <div className="py-8 text-center">
                             <FileText
@@ -423,8 +426,8 @@ export default function Medical() {
                                   key={note.id}
                                   className={`p-4 rounded-xl border ${type.border} ${type.bg}`}
                                 >
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-center gap-2 mb-2">
+                                  <div className="flex items-start justify-between gap-3 mb-2">
+                                    <div className="flex items-center gap-2">
                                       <type.icon
                                         size={14}
                                         className={type.color}
@@ -472,7 +475,7 @@ export default function Medical() {
                       </div>
                     )}
 
-                    {/* Visits Tab */}
+                    {/* ── Visits Tab ── */}
                     {activeTab === "visits" && (
                       <div>
                         {medData.visits.length === 0 ? (
@@ -490,25 +493,25 @@ export default function Medical() {
                             {medData.visits.map((visit) => (
                               <div
                                 key={visit.id}
-                                className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
+                                className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors gap-3"
                               >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
                                   <div className="w-8 h-8 bg-white rounded-lg border border-slate-200 flex items-center justify-center flex-shrink-0">
                                     <Stethoscope
                                       size={14}
                                       className="text-slate-400"
                                     />
                                   </div>
-                                  <div>
-                                    <p className="text-sm font-semibold text-slate-900">
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-slate-900 truncate">
                                       {visit.doctor_name}
                                     </p>
-                                    <p className="text-xs text-slate-400">
+                                    <p className="text-xs text-slate-400 truncate">
                                       {visit.reason || "General"}
                                     </p>
                                   </div>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-right flex-shrink-0">
                                   <p className="text-xs font-medium text-slate-700">
                                     {new Date(
                                       visit.start_time,
