@@ -97,7 +97,9 @@ def vapi_webhook(
 
             elif tool_name == "list_patient_appointments":
                 result = handle_list_patient_appointments(args, hospital, db)
-
+            
+            elif tool_name == "identify_caller":
+               result = handle_identify_caller(args, hospital, db)
             else:
                 result = {"error": f"Unknown tool: {tool_name}"}
 
@@ -293,3 +295,61 @@ def _generate_slots(date: dt.date, availability: DoctorAvailability) -> list[dt.
         slots.append(current)
         current += dt.timedelta(minutes=availability.slot_duration_minutes)
     return slots
+
+
+def handle_identify_caller(args: dict, hospital: Hospital, db: Session) -> dict:
+    """Caller ko phone number se identify karo"""
+    phone = args.get("phone", "").strip()
+    
+    if not phone:
+        return {"message": "new_patient", "known": False}
+    
+    # Number format normalize karo
+    if phone.startswith("0"):
+        phone_variants = [phone, "+92" + phone[1:], "92" + phone[1:]]
+    elif phone.startswith("+92"):
+        phone_variants = [phone, "0" + phone[3:], "92" + phone[3:]]
+    elif phone.startswith("92"):
+        phone_variants = [phone, "0" + phone[2:], "+" + phone]
+    else:
+        phone_variants = [phone]
+
+    # DB mein dhundo
+    patient = None
+    for variant in phone_variants:
+        result = db.execute(
+            select(Appointment)
+            .where(Appointment.hospital_id == hospital.id)
+            .where(Appointment.patient_phone == variant)
+            .where(Appointment.status != AppointmentStatus.canceled)
+            .order_by(Appointment.start_time.desc())
+        ).scalars().first()
+        if result:
+            patient = result
+            break
+
+    if not patient:
+        return {
+            "known": False,
+            "message": "new_patient"
+        }
+
+    # Upcoming appointments check karo
+    upcoming = db.execute(
+        select(Appointment)
+        .where(Appointment.hospital_id == hospital.id)
+        .where(Appointment.patient_phone == patient.patient_phone)
+        .where(Appointment.status == AppointmentStatus.scheduled)
+        .where(Appointment.start_time >= dt.datetime.now())
+        .order_by(Appointment.start_time.asc())
+    ).scalars().first()
+
+    upcoming_info = ""
+    if upcoming:
+        upcoming_info = f" You have an upcoming appointment with Dr. {upcoming.doctor.name} on {upcoming.start_time.strftime('%A, %B %d at %I:%M %p')}."
+
+    return {
+        "known": True,
+        "patient_name": patient.patient_name,
+        "message": f"Welcome back, {patient.patient_name}!{upcoming_info} How can I help you today?"
+    }
