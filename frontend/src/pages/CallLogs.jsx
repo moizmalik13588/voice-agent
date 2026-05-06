@@ -8,6 +8,7 @@ import {
   FileText,
   X,
   Search,
+  ChevronRight,
 } from "lucide-react";
 import api from "../api/axios";
 import toast from "react-hot-toast";
@@ -89,7 +90,6 @@ export default function CallLogs() {
       (c.phone || "").includes(search),
   );
 
-  // Stats
   const totalCalls = calls.length;
   const completedCalls = calls.filter((c) => c.status === "ended").length;
   const missedCalls = calls.filter((c) => c.status === "missed").length;
@@ -139,20 +139,22 @@ export default function CallLogs() {
   ];
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-7">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* ── Header ── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-1">
             Call Logs
           </h1>
           <p className="text-sm text-slate-400">
-            {totalCalls} total calls · Avg {formatDuration(avgDuration)} · $
+            {totalCalls} total · Avg {formatDuration(avgDuration)} · $
             {totalCost.toFixed(3)} spent
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 w-64">
-          <Search size={14} className="text-slate-400" />
+
+        {/* Search — full width on mobile */}
+        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 w-full sm:w-64">
+          <Search size={14} className="text-slate-400 flex-shrink-0" />
           <input
             placeholder="Search caller or phone..."
             value={search}
@@ -162,29 +164,31 @@ export default function CallLogs() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* ── Stats Grid ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {stats.map(({ label, value, icon: Icon, color, bg, accent }) => (
-          <div key={label} className="card p-5 relative overflow-hidden">
+          <div key={label} className="card p-4 sm:p-5 relative overflow-hidden">
             <div
               className="absolute top-0 left-0 w-1 h-full rounded-l-xl"
               style={{ background: accent }}
             />
             <div
-              className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center mb-3`}
+              className={`w-9 h-9 sm:w-10 sm:h-10 ${bg} rounded-xl flex items-center justify-center mb-3`}
             >
-              <Icon size={20} className={color} />
+              <Icon size={18} className={color} />
             </div>
-            <p className="text-3xl font-bold text-slate-900 tracking-tight mb-0.5">
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-0.5">
               {loading ? "—" : value}
             </p>
-            <p className="text-xs text-slate-400 font-medium">{label}</p>
+            <p className="text-xs text-slate-400 font-medium leading-tight">
+              {label}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* Table */}
-      <div className="card overflow-hidden">
+      {/* ── DESKTOP TABLE (hidden on mobile) ── */}
+      <div className="hidden md:block card overflow-hidden">
         <div className="grid grid-cols-6 px-5 py-3 bg-slate-50 border-b border-slate-100">
           {["Caller", "Phone", "Duration", "Cost", "Outcome", "Time"].map(
             (h) => (
@@ -213,7 +217,6 @@ export default function CallLogs() {
             const StatusIcon = statusInfo.icon;
             const outcome =
               OUTCOME_LABELS[call.outcome] || OUTCOME_LABELS.no_action;
-
             return (
               <div
                 key={call.id}
@@ -221,46 +224,34 @@ export default function CallLogs() {
                 className={`grid grid-cols-6 px-5 py-3.5 items-center cursor-pointer hover:bg-slate-50 transition-colors
                   ${i < filtered.length - 1 ? "border-b border-slate-50" : ""}`}
               >
-                {/* Caller */}
                 <div className="flex items-center gap-2.5">
                   <div
                     className={`w-8 h-8 rounded-full ${statusInfo.bg} flex items-center justify-center flex-shrink-0`}
                   >
                     <StatusIcon size={14} className={statusInfo.color} />
                   </div>
-                  <p className="text-sm font-semibold text-slate-900">
+                  <p className="text-sm font-semibold text-slate-900 truncate">
                     {call.caller || "Unknown"}
                   </p>
                 </div>
-
-                {/* Phone */}
                 <p className="text-sm text-slate-500">{call.phone || "—"}</p>
-
-                {/* Duration */}
                 <div className="flex items-center gap-1.5">
                   <Clock size={12} className="text-slate-400" />
                   <span className="text-sm text-slate-700 font-medium">
                     {formatDuration(call.duration)}
                   </span>
                 </div>
-
-                {/* Cost */}
                 <div className="flex items-center gap-1">
                   <DollarSign size={12} className="text-slate-400" />
                   <span className="text-sm text-slate-700">
                     {(call.cost || 0).toFixed(3)}
                   </span>
                 </div>
-
-                {/* Outcome */}
                 <span
-                  className={`text-xs font-bold px-2.5 py-1 rounded-full border w-fit
-                  ${outcome.bg} ${outcome.color} ${outcome.border}`}
+                  className={`text-xs font-bold px-2.5 py-1 rounded-full border w-fit ${outcome.bg} ${outcome.color} ${outcome.border}`}
                 >
                   {outcome.label}
                 </span>
-
-                {/* Time */}
                 <p className="text-xs text-slate-500">
                   {formatDateTime(call.started_at)}
                 </p>
@@ -270,11 +261,93 @@ export default function CallLogs() {
         )}
       </div>
 
+      {/* ── MOBILE CARDS (hidden on desktop) ── */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {loading ? (
+          <div className="py-12 text-center text-sm text-slate-400">
+            Loading...
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-12 text-center">
+            <Phone size={28} className="text-slate-200 mx-auto mb-2" />
+            <p className="text-sm text-slate-400">No call logs found</p>
+          </div>
+        ) : (
+          filtered.map((call) => {
+            const statusInfo = STATUS_ICONS[call.status] || STATUS_ICONS.ended;
+            const StatusIcon = statusInfo.icon;
+            const outcome =
+              OUTCOME_LABELS[call.outcome] || OUTCOME_LABELS.no_action;
+            return (
+              <div
+                key={call.id}
+                onClick={() => setSelected(call)}
+                className="bg-white border border-slate-100 rounded-2xl p-4 cursor-pointer active:bg-slate-50 transition-colors shadow-sm"
+              >
+                {/* Top row: avatar + name + outcome badge + chevron */}
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-full ${statusInfo.bg} flex items-center justify-center flex-shrink-0`}
+                  >
+                    <StatusIcon size={16} className={statusInfo.color} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 truncate">
+                      {call.caller || "Unknown Caller"}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {call.phone || "No phone"}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`text-xs font-bold px-2.5 py-1 rounded-full border flex-shrink-0 ${outcome.bg} ${outcome.color} ${outcome.border}`}
+                  >
+                    {outcome.label}
+                  </span>
+
+                  <ChevronRight
+                    size={15}
+                    className="text-slate-300 flex-shrink-0"
+                  />
+                </div>
+
+                {/* Bottom row: duration · cost · time */}
+                <div className="flex items-center gap-4 mt-3 pl-1 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <Clock size={11} className="text-slate-400" />
+                    <span className="text-xs font-semibold text-slate-700">
+                      {formatDuration(call.duration)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <DollarSign size={11} className="text-slate-400" />
+                    <span className="text-xs text-slate-600">
+                      {(call.cost || 0).toFixed(3)}
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-400 ml-auto">
+                    {formatDateTime(call.started_at)}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
       {/* ── Call Detail Modal ── */}
       {selected && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white w-full sm:rounded-2xl sm:max-w-lg rounded-t-3xl max-h-[92vh] sm:max-h-[85vh] overflow-auto">
+            {/* Drag handle — mobile only */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
+            </div>
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
                 <div
                   className={`w-10 h-10 rounded-full ${STATUS_ICONS[selected.status]?.bg || "bg-slate-50"} flex items-center justify-center`}
@@ -301,7 +374,7 @@ export default function CallLogs() {
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-5">
               {/* Call Stats */}
               <div className="grid grid-cols-3 gap-3 mb-6">
                 {[
@@ -325,7 +398,7 @@ export default function CallLogs() {
                     key={label}
                     className="bg-slate-50 rounded-xl p-3 text-center"
                   >
-                    <p className="text-xs font-bold text-slate-900 mb-0.5">
+                    <p className="text-xs font-bold text-slate-900 mb-0.5 break-words">
                       {value}
                     </p>
                     <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
