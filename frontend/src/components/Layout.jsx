@@ -17,6 +17,8 @@ import {
   CreditCard,
   Settings,
   Bell,
+  Menu,
+  X,
 } from "lucide-react";
 import { getHospital, logout } from "../store/auth";
 
@@ -41,6 +43,7 @@ export default function Layout({ children }) {
   const [notifs, setNotifs] = useState([]);
   const [unread, setUnread] = useState(0);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const bellRef = useRef(null);
 
   useEffect(() => {
@@ -74,8 +77,23 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* ── Sidebar ── */}
-      <aside className="w-60 bg-navy flex flex-col flex-shrink-0 relative overflow-hidden">
+      <aside
+        className={`
+        fixed lg:static inset-y-0 left-0 z-50
+        w-60 bg-navy flex flex-col flex-shrink-0 overflow-hidden
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}
+      >
         {/* Decorative cross */}
         <svg
           className="absolute bottom-16 -right-5 opacity-[0.05]"
@@ -88,20 +106,28 @@ export default function Layout({ children }) {
         </svg>
 
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/[0.07]">
-          <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Building2 size={18} className="text-white" />
+        <div className="flex items-center justify-between px-5 py-5 border-b border-white/[0.07]">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Building2 size={18} className="text-white" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-white tracking-tight">
+                MediBook
+              </p>
+              <p className="text-xs text-white/40 truncate">{hospital?.name}</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-white tracking-tight">
-              MediBook
-            </p>
-            <p className="text-xs text-white/40 truncate">{hospital?.name}</p>
-          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden text-white/40 hover:text-white flex-shrink-0"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
           <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest px-3 py-2">
             Menu
           </p>
@@ -110,6 +136,7 @@ export default function Layout({ children }) {
               key={to}
               to={to}
               end={to === "/"}
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
                 ${isActive ? "bg-white/15 text-white" : "text-white/50 hover:bg-white/10 hover:text-white"}`
@@ -153,8 +180,28 @@ export default function Layout({ children }) {
 
       {/* ── Main ── */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header with Bell */}
-        <div className="h-14 bg-white border-b border-slate-100 flex items-center justify-end px-6 flex-shrink-0 relative">
+        {/* Header */}
+        <div className="h-14 bg-white border-b border-slate-100 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 relative">
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden w-9 h-9 rounded-xl border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50"
+          >
+            <Menu size={18} className="text-slate-600" />
+          </button>
+
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center gap-2">
+            <div className="w-7 h-7 bg-primary-500 rounded-lg flex items-center justify-center">
+              <Building2 size={14} className="text-white" />
+            </div>
+            <span className="text-sm font-bold text-slate-800">MediBook</span>
+          </div>
+
+          {/* Desktop spacer */}
+          <div className="hidden lg:block" />
+
+          {/* Bell */}
           <button
             ref={bellRef}
             onClick={toggleBell}
@@ -168,9 +215,9 @@ export default function Layout({ children }) {
             )}
           </button>
 
-          {/* Dropdown */}
+          {/* Notifications dropdown */}
           {showNotifs && (
-            <div className="absolute top-12 right-4 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden">
+            <div className="absolute top-12 right-4 w-72 sm:w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-100">
                 <p className="text-sm font-bold text-slate-900">
                   Notifications
