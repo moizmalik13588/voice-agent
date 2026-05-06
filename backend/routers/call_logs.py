@@ -71,10 +71,19 @@ async def get_call_logs(
 def _get_outcome(call: dict) -> str:
     transcript = (call.get("transcript") or "").lower()
     
-    # Sirf tab "booked" mark karo jab actually book hua ho
-    if "appointment has been booked" in transcript or "your appointment is confirmed" in transcript:
+    if any(phrase in transcript for phrase in [
+        "appointment with doctor",
+        "you're all set",
+        "is confirmed for",
+        "appointment has been booked",
+        "confirmed for"
+    ]):
         return "appointment_booked"
-    elif "cancel" in transcript and "canceled" in transcript:
+    elif any(phrase in transcript for phrase in [
+        "has been canceled",
+        "successfully canceled",
+        "appointment canceled"
+    ]):
         return "appointment_canceled"
     elif call.get("status") == "ended":
         return "info_provided"
