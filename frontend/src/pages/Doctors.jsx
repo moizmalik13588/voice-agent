@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import api from "../api/axios";
 import toast from "react-hot-toast";
-
+import ConfirmModal from "../components/ConfirmModal";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const SPECIALTIES = [
   "General Physician",
