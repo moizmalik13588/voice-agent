@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { Calendar, Plus, X, Search, Filter } from "lucide-react";
+import {
+  Calendar,
+  Plus,
+  X,
+  Search,
+  Filter,
+  Clock,
+  Stethoscope,
+  ChevronRight,
+} from "lucide-react";
 import api from "../api/axios";
 import toast from "react-hot-toast";
 import ConfirmModal from "../components/ConfirmModal";
@@ -138,6 +147,12 @@ export default function Appointments() {
     }
   };
 
+  const closeModal = () => {
+    setShowModal(false);
+    setForm(emptyForm);
+    setAvailableSlots([]);
+  };
+
   const filtered = appointments.filter(
     (a) =>
       a.patient_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -149,40 +164,50 @@ export default function Appointments() {
     return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
   };
 
+  const displayDate = new Date(filterDate + "T00:00:00").toLocaleDateString(
+    "en-PK",
+    {
+      month: "long",
+      day: "numeric",
+    },
+  );
+
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-7">
-        <div>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* ── Header ── */}
+      <div className="flex items-start justify-between gap-3 mb-6">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-1">
             Appointments
           </h1>
           <p className="text-sm text-slate-400">
             {filtered.length} appointment{filtered.length !== 1 ? "s" : ""} on{" "}
-            {new Date(filterDate + "T00:00:00").toLocaleDateString("en-PK", {
-              month: "long",
-              day: "numeric",
-            })}
+            {displayDate}
           </p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary">
-          <Plus size={16} /> Book Appointment
+        <button
+          onClick={() => setShowModal(true)}
+          className="btn-primary flex-shrink-0 flex items-center gap-1.5 text-sm px-3 py-2 sm:px-4 sm:py-2.5"
+        >
+          <Plus size={15} />
+          <span className="hidden xs:inline sm:inline">Book</span>
+          <span className="hidden sm:inline">Appointment</span>
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-3 mb-5">
-        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5">
-          <Filter size={14} className="text-slate-400" />
+      {/* ── Filters ── */}
+      <div className="flex flex-col gap-2 sm:flex-row mb-5">
+        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 w-full sm:w-auto">
+          <Filter size={14} className="text-slate-400 flex-shrink-0" />
           <input
             type="date"
             value={filterDate}
             onChange={(e) => setFilterDate(e.target.value)}
-            className="border-none outline-none text-sm text-slate-900 bg-transparent"
+            className="border-none outline-none text-sm text-slate-900 bg-transparent w-full"
           />
         </div>
         <div className="flex-1 flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5">
-          <Search size={14} className="text-slate-400" />
+          <Search size={14} className="text-slate-400 flex-shrink-0" />
           <input
             placeholder="Search patient or doctor..."
             value={search}
@@ -192,8 +217,8 @@ export default function Appointments() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="card overflow-hidden">
+      {/* ── DESKTOP TABLE (md+) ── */}
+      <div className="hidden md:block card overflow-hidden">
         <div className="grid grid-cols-5 px-5 py-3 bg-slate-50 border-b border-slate-100">
           {["Patient", "Doctor", "Time", "Status", "Actions"].map((h) => (
             <span
@@ -225,16 +250,16 @@ export default function Appointments() {
                 <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-xs font-bold text-primary-500 flex-shrink-0">
                   {a.patient_name.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 truncate">
                     {a.patient_name}
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-400 truncate">
                     {a.reason || "General"}
                   </p>
                 </div>
               </div>
-              <p className="text-sm text-slate-500">{a.doctor_name}</p>
+              <p className="text-sm text-slate-500 truncate">{a.doctor_name}</p>
               <p className="text-sm font-semibold text-slate-700">
                 {new Date(a.start_time).toLocaleTimeString("en-PK", {
                   hour: "2-digit",
@@ -244,7 +269,7 @@ export default function Appointments() {
               <span className={`${STATUS_COLORS[a.status]} w-fit`}>
                 {a.status}
               </span>
-              <div className="flex gap-1.5">
+              <div className="flex gap-1.5 flex-wrap">
                 {a.status === "scheduled" && (
                   <>
                     <button
@@ -257,6 +282,7 @@ export default function Appointments() {
                       onClick={() =>
                         setConfirmModal({ open: true, appointmentId: a.id })
                       }
+                      className="px-2.5 py-1 rounded-lg border border-red-200 bg-red-50 text-red-500 text-xs font-bold hover:bg-red-100 transition-colors"
                     >
                       ✕ Cancel
                     </button>
@@ -274,26 +300,113 @@ export default function Appointments() {
         )}
       </div>
 
-      {/* Modal */}
+      {/* ── MOBILE CARDS (below md) ── */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {loading ? (
+          <div className="py-12 text-center text-sm text-slate-400">
+            Loading...
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-12 text-center">
+            <Calendar size={28} className="text-slate-200 mx-auto mb-2" />
+            <p className="text-sm text-slate-400">No appointments found</p>
+          </div>
+        ) : (
+          filtered.map((a) => (
+            <div
+              key={a.id}
+              className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm"
+            >
+              {/* Top: avatar + name + badge */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-sm font-bold text-primary-500 flex-shrink-0">
+                  {a.patient_name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 truncate">
+                    {a.patient_name}
+                  </p>
+                  <p className="text-xs text-slate-400 truncate">
+                    {a.reason || "General"}
+                  </p>
+                </div>
+                <span className={`${STATUS_COLORS[a.status]} flex-shrink-0`}>
+                  {a.status}
+                </span>
+              </div>
+
+              {/* Doctor + Time */}
+              <div className="flex items-center gap-4 mb-3 pl-1">
+                <div className="flex items-center gap-1.5">
+                  <Stethoscope size={12} className="text-slate-400" />
+                  <span className="text-xs text-slate-600 truncate max-w-[130px]">
+                    {a.doctor_name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Clock size={12} className="text-slate-400" />
+                  <span className="text-xs font-semibold text-slate-700">
+                    {new Date(a.start_time).toLocaleTimeString("en-PK", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              {a.status === "scheduled" && (
+                <div className="flex gap-2 pt-3 border-t border-slate-50">
+                  <button
+                    onClick={() => handleStatus(a.id, "completed")}
+                    className="flex-1 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 text-xs font-bold hover:bg-emerald-100 transition-colors"
+                  >
+                    ✓ Done
+                  </button>
+                  <button
+                    onClick={() =>
+                      setConfirmModal({ open: true, appointmentId: a.id })
+                    }
+                    className="flex-1 py-1.5 rounded-xl border border-red-200 bg-red-50 text-red-500 text-xs font-bold hover:bg-red-100 transition-colors"
+                  >
+                    ✕ Cancel
+                  </button>
+                  <button
+                    onClick={() => handleStatus(a.id, "no_show")}
+                    className="flex-1 py-1.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-600 text-xs font-bold hover:bg-amber-100 transition-colors"
+                  >
+                    No Show
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ── Book Appointment Modal (bottom sheet on mobile) ── */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white w-full sm:rounded-2xl sm:max-w-md rounded-t-3xl max-h-[92vh] sm:max-h-[85vh] overflow-auto">
+            {/* Drag handle — mobile only */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
+            </div>
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h2 className="text-base font-bold text-slate-900">
                 Book Appointment
               </h2>
               <button
-                onClick={() => {
-                  setShowModal(false);
-                  setForm(emptyForm);
-                  setAvailableSlots([]);
-                }}
+                onClick={closeModal}
                 className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
               >
                 <X size={15} className="text-slate-500" />
               </button>
             </div>
-            <div className="p-6 flex flex-col gap-4">
+
+            <div className="p-5 flex flex-col gap-4">
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
                   Doctor *
@@ -322,7 +435,6 @@ export default function Appointments() {
                   type="date"
                   value={form.date}
                   onChange={(e) => handleFormChange("date", e.target.value)}
-                  // min date for date input
                   min={new Date().toLocaleDateString("en-CA")}
                   className="input"
                 />
@@ -379,7 +491,7 @@ export default function Appointments() {
                   className="input"
                 />
               </div>
-              {/* Email */}
+
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
                   Patient Email
@@ -394,6 +506,7 @@ export default function Appointments() {
                   className="input"
                 />
               </div>
+
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
                   Reason
@@ -419,6 +532,7 @@ export default function Appointments() {
           </div>
         </div>
       )}
+
       <ConfirmModal
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ open: false, appointmentId: null })}
