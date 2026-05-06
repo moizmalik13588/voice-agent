@@ -71,21 +71,27 @@ async def get_call_logs(
 def _get_outcome(call: dict) -> str:
     transcript = (call.get("transcript") or "").lower()
     
+    # Check karo tool calls mein book_appointment tha?
+    messages = call.get("messages", [])
+    for msg in messages:
+        if msg.get("role") == "tool_call":
+            if "book_appointment" in str(msg):
+                return "appointment_booked"
+        if msg.get("role") == "tool_result":
+            content = str(msg.get("content", "")).lower()
+            if "booked successfully" in content or "is confirmed" in content:
+                return "appointment_booked"
+            if "has been canceled" in content:
+                return "appointment_canceled"
+    
+    # Transcript fallback
     if any(phrase in transcript for phrase in [
-        "appointment with doctor",
-        "you're all set",
-        "is confirmed for",
-        "appointment has been booked",
-        "confirmed for"
+        "you're all set", "is confirmed for", "confirmed for", "appointment with doctor"
     ]):
         return "appointment_booked"
-    elif any(phrase in transcript for phrase in [
-        "has been canceled",
-        "successfully canceled",
-        "appointment canceled"
-    ]):
+    elif "canceled" in transcript:
         return "appointment_canceled"
     elif call.get("status") == "ended":
         return "info_provided"
-    else:
-        return "no_action"
+    return "no_action"
+   
