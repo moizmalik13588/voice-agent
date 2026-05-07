@@ -1,20 +1,12 @@
 import os
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+import resend # Naya SDK
 from pydantic import EmailStr
 import datetime as dt
 
-conf = ConnectionConfig(
-    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
-    MAIL_FROM=os.getenv("MAIL_FROM"),
-    MAIL_PORT=465,
-    MAIL_SERVER="smtp.resend.com",
-    MAIL_STARTTLS=False,
-    MAIL_SSL_TLS=True,
-    USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True,
-    TIMEOUT=60
-)
+# Resend API Key set karein
+# Railway variables mein MAIL_PASSWORD mein 're_...' wali key honi chahiye
+resend.api_key = os.getenv("MAIL_PASSWORD")
+
 async def send_appointment_confirmation_email(
     patient_email: str,
     patient_name: str,
@@ -47,14 +39,17 @@ async def send_appointment_confirmation_email(
         </div>
     </div>
     """
-    message = MessageSchema(
-        subject=f"✅ Appointment Confirmed — Dr. {doctor_name}",
-        recipients=[patient_email],
-        body=html,
-        subtype=MessageType.html,
-    )
-    fm = FastMail(conf)
-    await fm.send_message(message)
+    
+    try:
+        params = {
+            "from": os.getenv("MAIL_FROM", "onboarding@resend.dev"),
+            "to": patient_email,
+            "subject": f"✅ Appointment Confirmed — Dr. {doctor_name}",
+            "html": html,
+        }
+        resend.Emails.send(params)
+    except Exception as e:
+        print(f"Resend Error (Confirmation): {e}")
 
 
 async def send_appointment_cancellation_email(
@@ -87,14 +82,17 @@ async def send_appointment_cancellation_email(
         </div>
     </div>
     """
-    message = MessageSchema(
-        subject=f"❌ Appointment Canceled — Dr. {doctor_name}",
-        recipients=[patient_email],
-        body=html,
-        subtype=MessageType.html,
-    )
-    fm = FastMail(conf)
-    await fm.send_message(message)
+    
+    try:
+        params = {
+            "from": os.getenv("MAIL_FROM", "onboarding@resend.dev"),
+            "to": patient_email,
+            "subject": f"❌ Appointment Canceled — Dr. {doctor_name}",
+            "html": html,
+        }
+        resend.Emails.send(params)
+    except Exception as e:
+        print(f"Resend Error (Cancellation): {e}")
 
 
 async def send_appointment_reminder_email(
@@ -127,11 +125,14 @@ async def send_appointment_reminder_email(
         </div>
     </div>
     """
-    message = MessageSchema(
-        subject=f"⏰ Reminder: Appointment tomorrow — Dr. {doctor_name}",
-        recipients=[patient_email],
-        body=html,
-        subtype=MessageType.html,
-    )
-    fm = FastMail(conf)
-    await fm.send_message(message)
+    
+    try:
+        params = {
+            "from": os.getenv("MAIL_FROM", "onboarding@resend.dev"),
+            "to": patient_email,
+            "subject": f"⏰ Reminder: Appointment tomorrow — Dr. {doctor_name}",
+            "html": html,
+        }
+        resend.Emails.send(params)
+    except Exception as e:
+        print(f"Resend Error (Reminder): {e}")
