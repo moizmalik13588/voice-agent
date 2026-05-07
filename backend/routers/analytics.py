@@ -1,7 +1,8 @@
 import datetime as dt
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
+
 from database import get_db
 from models import Appointment, AppointmentStatus, Doctor
 from auth import get_hospital
@@ -10,22 +11,26 @@ router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
 @router.get("/overview")
-def get_overview(db: Session = Depends(get_db), hospital=Depends(get_hospital)):
-    
-    # Total appointments all time
+def get_overview(
+    db: Session = Depends(get_db),
+    hospital=Depends(get_hospital)
+):
+
+    # Total appointments / calls
     total = db.execute(
         select(func.count(Appointment.id))
         .where(Appointment.hospital_id == hospital.id)
-    ).scalar()
+    ).scalar() or 0
 
     # This month
     now = dt.datetime.now()
     month_start = dt.datetime(now.year, now.month, 1)
+
     this_month = db.execute(
         select(func.count(Appointment.id))
         .where(Appointment.hospital_id == hospital.id)
         .where(Appointment.start_time >= month_start)
-    ).scalar()
+    ).scalar() or 0
 
     # Last month
     if now.month == 1:
@@ -40,51 +45,95 @@ def get_overview(db: Session = Depends(get_db), hospital=Depends(get_hospital)):
         .where(Appointment.hospital_id == hospital.id)
         .where(Appointment.start_time >= last_month_start)
         .where(Appointment.start_time < last_month_end)
-    ).scalar()
+    ).scalar() or 0
 
     # Growth %
     growth = 0
     if last_month > 0:
-        growth = round(((this_month - last_month) / last_month) * 100, 1)
+        growth = round(
+            ((this_month - last_month) / last_month) * 100,
+            1
+        )
 
-    # Completion rate
+    # Completed calls
     completed = db.execute(
         select(func.count(Appointment.id))
         .where(Appointment.hospital_id == hospital.id)
-        .where(Appointment.status == AppointmentStatus.completed)
-    ).scalar()
+        .where(
+            or_(
+                Appointment.status == AppointmentStatus.completed,
+                Appointment.outcome == "completed",
+            )
+        )
+    ).scalar() or 0
 
-    completion_rate = round((completed / total * 100), 1) if total > 0 else 0
+    # Missed calls
+    # 0s duration OR outcome missed
+    missed = db.execute(
+        select(func.count(Appointment.id))
+        .where(Appointment.hospital_id == hospital.id)
+        .where(
+            or_(
+                Appointment.duration == "0s",
+                Appointment.duration == "0m 0s",
+                Appointment.outcome == "missed",
+            )
+        )
+    ).scalar() or 0
 
-    # No show rate
+    # Completion rate
+    completion_rate = (
+        round((completed / total) * 100, 1)
+        if total > 0 else 0
+    )
+
+    # Missed rate
+    missed_rate = (
+        round((missed / total) * 100, 1)
+        if total > 0 else 0
+    )
+
+    # No-show rate
     no_show = db.execute(
         select(func.count(Appointment.id))
         .where(Appointment.hospital_id == hospital.id)
         .where(Appointment.status == AppointmentStatus.no_show)
-    ).scalar()
+    ).scalar() or 0
 
-    no_show_rate = round((no_show / total * 100), 1) if total > 0 else 0
+    no_show_rate = (
+        round((no_show / total) * 100, 1)
+        if total > 0 else 0
+    )
 
     # Unique patients
     unique_patients = db.execute(
         select(func.count(func.distinct(Appointment.patient_name)))
         .where(Appointment.hospital_id == hospital.id)
-    ).scalar()
+    ).scalar() or 0
 
     return {
         "total_appointments": total,
         "this_month": this_month,
         "last_month": last_month,
         "growth_percent": growth,
+
+        "total_completed": completed,
         "completion_rate": completion_rate,
+
+        "missed_calls": missed,
+        "missed_rate": missed_rate,
+
         "no_show_rate": no_show_rate,
         "unique_patients": unique_patients,
-        "total_completed": completed,
     }
 
 
 @router.get("/popular-doctors")
-def popular_doctors(db: Session = Depends(get_db), hospital=Depends(get_hospital)):
+def popular_doctors(
+    db: Session = Depends(get_db),
+    hospital=Depends(get_hospital)
+):
+
     results = db.execute(
         select(
             Doctor.name,
@@ -93,33 +142,51 @@ def popular_doctors(db: Session = Depends(get_db), hospital=Depends(get_hospital
         )
         .join(Appointment, Appointment.doctor_id == Doctor.id)
         .where(Appointment.hospital_id == hospital.id)
-        .group_by(Doctor.id, Doctor.name, Doctor.specialty)
+        .group_by(
+            Doctor.id,
+            Doctor.name,
+            Doctor.specialty
+        )
         .order_by(func.count(Appointment.id).desc())
     ).all()
 
     doctors_data = []
+
     for r in results:
-        # Completed count alag query se
+
         completed = db.execute(
             select(func.count(Appointment.id))
             .join(Doctor, Appointment.doctor_id == Doctor.id)
             .where(Appointment.hospital_id == hospital.id)
             .where(Doctor.name == r.name)
-            .where(Appointment.status == AppointmentStatus.completed)
-        ).scalar()
+            .where(
+                or_(
+                    Appointment.status == AppointmentStatus.completed,
+                    Appointment.outcome == "completed"
+                )
+            )
+        ).scalar() or 0
 
         doctors_data.append({
             "name": r.name,
             "specialty": r.specialty,
             "total": r.total,
-            "completed": completed or 0,
-            "completion_rate": round((completed or 0) / r.total * 100, 1) if r.total > 0 else 0,
+            "completed": completed,
+            "completion_rate": round(
+                (completed / r.total) * 100,
+                1
+            ) if r.total > 0 else 0,
         })
 
     return doctors_data
 
+
 @router.get("/busy-hours")
-def busy_hours(db: Session = Depends(get_db), hospital=Depends(get_hospital)):
+def busy_hours(
+    db: Session = Depends(get_db),
+    hospital=Depends(get_hospital)
+):
+
     appointments = db.execute(
         select(Appointment.start_time)
         .where(Appointment.hospital_id == hospital.id)
@@ -127,13 +194,16 @@ def busy_hours(db: Session = Depends(get_db), hospital=Depends(get_hospital)):
     ).scalars().all()
 
     hour_counts = {}
+
     for appt in appointments:
         hour = appt.hour
         hour_counts[hour] = hour_counts.get(hour, 0) + 1
 
     result = []
+
     for hour in range(8, 20):
         label = f"{hour % 12 or 12}{'AM' if hour < 12 else 'PM'}"
+
         result.append({
             "hour": label,
             "count": hour_counts.get(hour, 0)
@@ -143,11 +213,16 @@ def busy_hours(db: Session = Depends(get_db), hospital=Depends(get_hospital)):
 
 
 @router.get("/monthly-trend")
-def monthly_trend(db: Session = Depends(get_db), hospital=Depends(get_hospital)):
+def monthly_trend(
+    db: Session = Depends(get_db),
+    hospital=Depends(get_hospital)
+):
+
     now = dt.datetime.now()
     result = []
 
     for i in range(5, -1, -1):
+
         if now.month - i <= 0:
             month = now.month - i + 12
             year = now.year - 1
@@ -156,6 +231,7 @@ def monthly_trend(db: Session = Depends(get_db), hospital=Depends(get_hospital))
             year = now.year
 
         start = dt.datetime(year, month, 1)
+
         if month == 12:
             end = dt.datetime(year + 1, 1, 1)
         else:
@@ -167,7 +243,7 @@ def monthly_trend(db: Session = Depends(get_db), hospital=Depends(get_hospital))
             .where(Appointment.start_time >= start)
             .where(Appointment.start_time < end)
             .where(Appointment.status != AppointmentStatus.canceled)
-        ).scalar()
+        ).scalar() or 0
 
         result.append({
             "month": start.strftime("%b %Y"),
@@ -178,8 +254,11 @@ def monthly_trend(db: Session = Depends(get_db), hospital=Depends(get_hospital))
 
 
 @router.get("/retention")
-def retention_rate(db: Session = Depends(get_db), hospital=Depends(get_hospital)):
-    # Patients with more than 1 visit
+def retention_rate(
+    db: Session = Depends(get_db),
+    hospital=Depends(get_hospital)
+):
+
     results = db.execute(
         select(
             Appointment.patient_name,
@@ -191,22 +270,46 @@ def retention_rate(db: Session = Depends(get_db), hospital=Depends(get_hospital)
     ).all()
 
     total_patients = len(results)
-    returning = sum(1 for r in results if r.visits > 1)
-    retention = round((returning / total_patients * 100), 1) if total_patients > 0 else 0
 
-    # Visit distribution
-    one_visit = sum(1 for r in results if r.visits == 1)
-    two_visits = sum(1 for r in results if r.visits == 2)
-    three_plus = sum(1 for r in results if r.visits >= 3)
+    returning = sum(
+        1 for r in results if r.visits > 1
+    )
+
+    retention = round(
+        (returning / total_patients) * 100,
+        1
+    ) if total_patients > 0 else 0
+
+    one_visit = sum(
+        1 for r in results if r.visits == 1
+    )
+
+    two_visits = sum(
+        1 for r in results if r.visits == 2
+    )
+
+    three_plus = sum(
+        1 for r in results if r.visits >= 3
+    )
 
     return {
         "retention_rate": retention,
         "total_patients": total_patients,
         "returning_patients": returning,
         "new_patients": one_visit,
+
         "visit_distribution": [
-            {"label": "1 Visit", "value": one_visit},
-            {"label": "2 Visits", "value": two_visits},
-            {"label": "3+ Visits", "value": three_plus},
+            {
+                "label": "1 Visit",
+                "value": one_visit
+            },
+            {
+                "label": "2 Visits",
+                "value": two_visits
+            },
+            {
+                "label": "3+ Visits",
+                "value": three_plus
+            },
         ]
     }
