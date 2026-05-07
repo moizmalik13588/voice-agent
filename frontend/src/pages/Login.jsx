@@ -25,10 +25,11 @@ export default function Login() {
       localStorage.setItem("api_key", form.api_key);
       const res = await api.get("/hospitals/me");
       saveAuth(form.api_key, res.data);
-      toast.success(`Welcome, ${res.data.name}!`, { duration: 1500 });
-      setTimeout(() => {
-        navigate("/");
-      }, 500);
+
+      // ── FIX 1: Show toast, wait for it to appear, then navigate immediately ──
+      // Don't wait for toast to finish — just navigate right away after saving auth
+      toast.success(`Welcome, ${res.data.name}!`, { duration: 2500 });
+      navigate("/"); // immediate — no setTimeout delay
     } catch (err) {
       localStorage.removeItem("api_key");
       if (err.response?.status === 401) {
@@ -52,7 +53,7 @@ export default function Login() {
     try {
       const res = await api.post("/hospitals/register", {
         name: form.name,
-        email: form.email,
+        email: res.data.email,
         phone: form.phone || undefined,
       });
       saveAuth(res.data.api_key, res.data);
@@ -70,9 +71,9 @@ export default function Login() {
       <Toaster
         position="top-center"
         toastOptions={{
-          duration: 3000, // ← add karo
+          duration: 3000,
           success: {
-            duration: 3000,
+            duration: 2500,
             style: {
               background: "#f0fdf4",
               color: "#16a34a",
@@ -227,9 +228,8 @@ export default function Login() {
         </div>
       </div>
 
-      {/* ── RIGHT ── */}
+      {/* ── RIGHT (desktop only) ── */}
       <div className="hidden lg:flex w-[45%] bg-navy flex-col justify-center px-14 py-12 relative overflow-hidden flex-shrink-0">
-        {/* Medical cross top right */}
         <svg
           className="absolute top-8 right-8 opacity-10"
           width="90"
@@ -239,8 +239,6 @@ export default function Login() {
           <rect x="34" y="0" width="22" height="90" rx="7" fill="white" />
           <rect x="0" y="34" width="90" height="22" rx="7" fill="white" />
         </svg>
-
-        {/* ECG line */}
         <svg
           className="absolute bottom-24 left-0 right-0 opacity-10"
           width="100%"
@@ -255,8 +253,6 @@ export default function Login() {
             strokeWidth="2.5"
           />
         </svg>
-
-        {/* Dot grid */}
         <svg
           className="absolute top-7 left-7 opacity-[0.06]"
           width="100"
@@ -275,8 +271,6 @@ export default function Login() {
             )),
           )}
         </svg>
-
-        {/* Small cross bottom left */}
         <svg
           className="absolute bottom-9 left-9 opacity-[0.07]"
           width="44"
@@ -286,9 +280,7 @@ export default function Login() {
           <rect x="16" y="0" width="12" height="44" rx="4" fill="white" />
           <rect x="0" y="16" width="44" height="12" rx="4" fill="white" />
         </svg>
-
         <div className="relative z-10">
-          {/* Badge */}
           <div
             className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-6 border"
             style={{
@@ -301,7 +293,6 @@ export default function Login() {
               AI-POWERED
             </span>
           </div>
-
           <h2 className="text-2xl font-bold text-white leading-snug mb-2 tracking-tight">
             Smart Hospital
             <br />
@@ -314,7 +305,6 @@ export default function Login() {
             Automate patient calls, bookings & reminders — so your staff can
             focus on care.
           </p>
-
           <div className="flex flex-col gap-4">
             {[
               { label: "Answers every patient call", color: "#60a5fa" },
