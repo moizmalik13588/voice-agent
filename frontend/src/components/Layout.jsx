@@ -88,11 +88,12 @@ export default function Layout({ children }) {
       {/* ── Sidebar ── */}
       <aside
         className={`
-        fixed lg:static inset-y-0 left-0 z-50
-        w-60 bg-navy flex flex-col flex-shrink-0 overflow-hidden
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-      `}
+  fixed inset-y-0 left-0 z-50
+  w-64 bg-navy flex flex-col
+  transition-transform duration-300 ease-in-out
+  lg:translate-x-0 lg:static lg:z-auto
+  ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+`}
       >
         {/* Decorative cross */}
         <svg
@@ -127,7 +128,7 @@ export default function Layout({ children }) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto scrollbar-none">
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto overscroll-contain scrollbar-none">
           <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest px-3 py-2">
             Menu
           </p>
@@ -179,7 +180,7 @@ export default function Layout({ children }) {
       </aside>
 
       {/* ── Main ── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header */}
         <div className="h-14 bg-white border-b border-slate-100 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 relative">
           {/* Mobile menu button */}
