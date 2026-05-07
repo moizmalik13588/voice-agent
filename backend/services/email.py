@@ -9,9 +9,11 @@ conf = ConnectionConfig(
     MAIL_FROM=os.getenv("MAIL_FROM"),
     MAIL_PORT=int(os.getenv("MAIL_PORT", 465)),
     MAIL_SERVER=os.getenv("MAIL_SERVER", "smtp.gmail.com"),
-    MAIL_STARTTLS=False,
-    MAIL_SSL_TLS=True,
+    MAIL_STARTTLS=False,  # <-- 465 ke liye False hona chahiye
+    MAIL_SSL_TLS=True,    # <-- 465 ke liye True hona chahiye
     USE_CREDENTIALS=True,
+    VALIDATE_CERTS=False,
+    TIMEOUT=60
 )
 
 async def send_appointment_confirmation_email(
