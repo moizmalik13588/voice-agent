@@ -92,7 +92,9 @@ export default function CallLogs() {
 
   const totalCalls = calls.length;
   const completedCalls = calls.filter((c) => c.status === "ended").length;
-  const missedCalls = calls.filter((c) => c.status === "missed").length;
+  const missedCalls = calls.filter(
+    (c) => c.status === "missed" || c.duration === 0,
+  ).length;
   const bookedCalls = calls.filter(
     (c) => c.outcome === "appointment_booked",
   ).length;

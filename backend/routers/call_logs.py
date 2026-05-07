@@ -29,6 +29,7 @@ async def get_call_logs(
             call.get("duration") or
             0
         )
+
         # Try endedAt - startedAt calculate karo
         if not duration and call.get("startedAt") and call.get("endedAt"):
             from datetime import datetime
@@ -36,7 +37,16 @@ async def get_call_logs(
                 start = datetime.fromisoformat(call["startedAt"].replace("Z", "+00:00"))
                 end = datetime.fromisoformat(call["endedAt"].replace("Z", "+00:00"))
                 duration = round((end - start).total_seconds())
-            except: duration = 0
+            except:
+                duration = 0
+
+        # ✅ STATUS FIX YAHAN ADD KARO
+        status = call.get("status", "unknown")
+
+        # 0 duration = missed
+        duration = round(duration)
+        if duration == 0 and status == "ended":
+            status = "missed"
 
         # Caller fix
         caller = (
@@ -56,8 +66,8 @@ async def get_call_logs(
             "id": call.get("id"),
             "caller": caller,
             "phone": phone,
-            "duration": round(duration),
-            "status": call.get("status", "unknown"),
+            "duration": duration,
+            "status": status,   # ✅ yahan bhi change
             "outcome": _get_outcome(call),
             "started_at": call.get("startedAt"),
             "ended_at": call.get("endedAt"),
