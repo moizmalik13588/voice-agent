@@ -127,7 +127,7 @@ export default function Layout({ children }) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto scrollbar-none">
           <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest px-3 py-2">
             Menu
           </p>
