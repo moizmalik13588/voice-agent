@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Calendar, Users, CheckCircle, XCircle, Clock } from "lucide-react";
+import {
+  Calendar,
+  Users,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Stethoscope,
+} from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -37,7 +44,7 @@ export default function Dashboard() {
   const [doctors, setDoctors] = useState([]);
   const [weekData, setWeekData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const today = new Date().toLocaleDateString("en-CA"); // "2026-05-02" format
+  const today = new Date().toLocaleDateString("en-CA");
 
   const [stats_data, setStatsData] = useState({
     total_completed: 0,
@@ -53,13 +60,11 @@ export default function Dashboard() {
           api.get("/doctors/"),
           api.get("/appointments/stats"),
         ]);
-
         setTodayAppts(appts.data);
         setDoctors(docs.data);
         setStatsData(stats.data);
 
         const days = getLast7Days();
-
         const weekResults = await Promise.all(
           days.map((date) =>
             api.post("/appointments/list", { date }).then((r) => ({
@@ -71,7 +76,6 @@ export default function Dashboard() {
             })),
           ),
         );
-
         setWeekData(weekResults);
       } catch (err) {
         console.log(err);
@@ -79,7 +83,6 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
-
     fetchAll();
   }, []);
 
@@ -91,7 +94,6 @@ export default function Dashboard() {
       color: "#1565c0",
       bg: "bg-primary-50",
       iconColor: "text-primary-500",
-      accent: "#1565c0",
     },
     {
       label: "Total Doctors",
@@ -100,7 +102,6 @@ export default function Dashboard() {
       color: "#7c3aed",
       bg: "bg-violet-50",
       iconColor: "text-violet-600",
-      accent: "#7c3aed",
     },
     {
       label: "Total Completed",
@@ -109,7 +110,6 @@ export default function Dashboard() {
       color: "#059669",
       bg: "bg-emerald-50",
       iconColor: "text-emerald-600",
-      accent: "#059669",
     },
     {
       label: "Total Canceled",
@@ -118,7 +118,6 @@ export default function Dashboard() {
       color: "#dc2626",
       bg: "bg-red-50",
       iconColor: "text-red-600",
-      accent: "#dc2626",
     },
   ];
 
@@ -163,16 +162,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-7">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* ── Header ── */}
+      <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-xs text-slate-500 font-medium">
             Live Dashboard
           </span>
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-1">
           {getGreeting()}, {hospital?.name} 👋
         </h1>
         <p className="text-sm text-slate-400">
@@ -185,48 +184,51 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* ── Stats Grid ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {stats.map(({ label, value, icon: Icon, color, bg, iconColor }) => (
-          <div key={label} className="card p-5 relative overflow-hidden">
+          <div key={label} className="card p-4 sm:p-5 relative overflow-hidden">
             <div
-              style={{ background: color }}
               className="absolute top-0 left-0 w-1 h-full rounded-l-xl"
+              style={{ background: color }}
             />
             <div
-              className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center mb-3`}
+              className={`w-9 h-9 sm:w-10 sm:h-10 ${bg} rounded-xl flex items-center justify-center mb-3`}
             >
-              <Icon size={20} className={iconColor} />
+              <Icon size={18} className={iconColor} />
             </div>
-            <p className="text-3xl font-bold text-slate-900 tracking-tight mb-0.5">
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-0.5">
               {loading ? "—" : value}
             </p>
-            <p className="text-xs text-slate-400 font-medium">{label}</p>
+            <p className="text-xs text-slate-400 font-medium leading-tight">
+              {label}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      {/* ── Charts Row ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         {/* Bar Chart */}
-        <div className="card p-5 lg:col-span-2">
+        <div className="card p-4 sm:p-5 lg:col-span-2">
           <p className="text-sm font-bold text-slate-900 mb-0.5">
             Weekly Appointments
           </p>
           <p className="text-xs text-slate-400 mb-4">Last 7 days overview</p>
           <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={weekData} barSize={16}>
+            <BarChart data={weekData} barSize={14}>
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 10, fill: "#94a3b8" }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 10, fill: "#94a3b8" }}
                 axisLine={false}
                 tickLine={false}
                 allowDecimals={false}
+                width={20}
               />
               <Tooltip
                 contentStyle={{
@@ -253,7 +255,7 @@ export default function Dashboard() {
         </div>
 
         {/* Pie Chart */}
-        <div className="card p-5">
+        <div className="card p-4 sm:p-5">
           <p className="text-sm font-bold text-slate-900 mb-0.5">
             Today's Status
           </p>
@@ -305,8 +307,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Busy Hours */}
-      <div className="card p-5 mb-6">
+      {/* ── Busy Hours ── */}
+      <div className="card p-4 sm:p-5 mb-4">
         <p className="text-sm font-bold text-slate-900 mb-0.5">
           Busy Hours Today
         </p>
@@ -315,15 +317,16 @@ export default function Dashboard() {
           <LineChart data={hourData}>
             <XAxis
               dataKey="hour"
-              tick={{ fontSize: 11, fill: "#94a3b8" }}
+              tick={{ fontSize: 10, fill: "#94a3b8" }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 11, fill: "#94a3b8" }}
+              tick={{ fontSize: 10, fill: "#94a3b8" }}
               axisLine={false}
               tickLine={false}
               allowDecimals={false}
+              width={20}
             />
             <Tooltip
               contentStyle={{
@@ -345,9 +348,10 @@ export default function Dashboard() {
         </ResponsiveContainer>
       </div>
 
-      {/* Today's Appointments */}
+      {/* ── Today's Appointments ── */}
       <div className="card overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50">
+        {/* Card header */}
+        <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-slate-50">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center">
               <Clock size={15} className="text-primary-500" />
@@ -361,7 +365,7 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
-          <span className="text-xs text-slate-500 font-medium bg-slate-50 px-3 py-1.5 rounded-lg">
+          <span className="text-xs text-slate-500 font-medium bg-slate-50 px-3 py-1.5 rounded-lg flex-shrink-0">
             {new Date().toLocaleDateString("en-PK", {
               month: "short",
               day: "numeric",
@@ -380,45 +384,93 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-4 px-5 py-2.5 bg-slate-50 border-b border-slate-100">
-              {["Patient", "Doctor", "Time", "Status"].map((h) => (
-                <span
-                  key={h}
-                  className="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+            {/* ── DESKTOP TABLE (md+) ── */}
+            <div className="hidden md:block">
+              <div className="grid grid-cols-4 px-5 py-2.5 bg-slate-50 border-b border-slate-100">
+                {["Patient", "Doctor", "Time", "Status"].map((h) => (
+                  <span
+                    key={h}
+                    className="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                  >
+                    {h}
+                  </span>
+                ))}
+              </div>
+              {todayAppts.map((a, i) => (
+                <div
+                  key={a.id}
+                  className={`grid grid-cols-4 px-5 py-3.5 items-center hover:bg-slate-50 transition-colors
+                    ${i < todayAppts.length - 1 ? "border-b border-slate-50" : ""}`}
                 >
-                  {h}
-                </span>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-xs font-bold text-primary-500 flex-shrink-0">
+                      {a.patient_name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">
+                        {a.patient_name}
+                      </p>
+                      <p className="text-xs text-slate-400 truncate">
+                        {a.reason || "General"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-500 truncate">
+                    {a.doctor_name}
+                  </p>
+                  <p className="text-sm font-semibold text-slate-700">
+                    {new Date(a.start_time).toLocaleTimeString("en-PK", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                  <span className={`badge-${a.status} w-fit`}>{a.status}</span>
+                </div>
               ))}
             </div>
-            {todayAppts.map((a, i) => (
-              <div
-                key={a.id}
-                className={`grid grid-cols-4 px-5 py-3.5 items-center hover:bg-slate-50 transition-colors
-                  ${i < todayAppts.length - 1 ? "border-b border-slate-50" : ""}`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-xs font-bold text-primary-500 flex-shrink-0">
-                    {a.patient_name.charAt(0).toUpperCase()}
+
+            {/* ── MOBILE CARDS (below md) ── */}
+            <div className="flex flex-col divide-y divide-slate-50 md:hidden">
+              {todayAppts.map((a) => (
+                <div key={a.id} className="p-4">
+                  {/* Top: avatar + name + status */}
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-9 h-9 rounded-full bg-primary-50 flex items-center justify-center text-sm font-bold text-primary-500 flex-shrink-0">
+                      {a.patient_name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">
+                        {a.patient_name}
+                      </p>
+                      <p className="text-xs text-slate-400 truncate">
+                        {a.reason || "General"}
+                      </p>
+                    </div>
+                    <span className={`badge-${a.status} flex-shrink-0`}>
+                      {a.status}
+                    </span>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {a.patient_name}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {a.reason || "General"}
-                    </p>
+                  {/* Doctor + time */}
+                  <div className="flex items-center gap-4 pl-12">
+                    <div className="flex items-center gap-1.5">
+                      <Stethoscope size={11} className="text-slate-400" />
+                      <span className="text-xs text-slate-500 truncate max-w-[120px]">
+                        {a.doctor_name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={11} className="text-slate-400" />
+                      <span className="text-xs font-semibold text-slate-700">
+                        {new Date(a.start_time).toLocaleTimeString("en-PK", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <p className="text-sm text-slate-500">{a.doctor_name}</p>
-                <p className="text-sm font-semibold text-slate-700">
-                  {new Date(a.start_time).toLocaleTimeString("en-PK", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-                <span className={`badge-${a.status} w-fit`}>{a.status}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </>
         )}
       </div>
