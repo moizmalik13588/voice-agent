@@ -26,10 +26,14 @@ export default function Login() {
       const res = await api.get("/hospitals/me");
       saveAuth(form.api_key, res.data);
 
-      // ── FIX 1: Show toast, wait for it to appear, then navigate immediately ──
-      // Don't wait for toast to finish — just navigate right away after saving auth
-      toast.success(`Welcome, ${res.data.name}!`, { duration: 2500 });
-      navigate("/"); // immediate — no setTimeout delay
+      // Show welcome toast on login page briefly, then clear it before navigating
+      const toastId = toast.success(`Welcome, ${res.data.name}!`, {
+        duration: 9999,
+      });
+      setTimeout(() => {
+        toast.dismiss(toastId);
+        navigate("/");
+      }, 1200);
     } catch (err) {
       localStorage.removeItem("api_key");
       if (err.response?.status === 401) {
