@@ -301,7 +301,7 @@ def cancel_appointment(
         # Background task mein daalna behtar hai taake API fast rahay
         background_tasks.add_task(
             delete_calendar_event, 
-            appointment=appointment, 
+            appointment_id=appointment.id, 
             hospital_id=hospital.id, 
             db=db
         )
