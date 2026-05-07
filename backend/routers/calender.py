@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, Column, Integer, String, Text, ForeignKey
 from database import get_db, Base
 from models import Appointment, Doctor
+from sqlalchemy import update
 from auth import get_hospital
 import os
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
@@ -155,6 +156,7 @@ def sync_appointment(
     if not creds:
         raise HTTPException(status_code=401, detail="Google Calendar not connected")
 
+    # 1. Appointment verify karein
     appointment = db.execute(
         select(Appointment).where(
             Appointment.id == appointment_id,
@@ -166,24 +168,32 @@ def sync_appointment(
         raise HTTPException(status_code=404, detail="Appointment not found")
 
     try:
+        # 2. Google Calendar Event Create karein
         service = build("calendar", "v3", credentials=creds)
         event = _create_calendar_event(appointment, hospital.name)
         created = service.events().insert(calendarId="primary", body=event).execute()
 
-        # 🔥 Sahi Indented Lines
-        appointment.google_event_id = created.get("id")
-        db.commit()
+        new_event_id = created.get("id")
+        
+        # 3. 🔥 Direct SQL Update (Taake null ka masla khatam ho)
+        db.execute(
+            update(Appointment)
+            .where(Appointment.id == appointment_id)
+            .values(google_event_id=new_event_id)
+        )
+        db.commit() 
+        
+        print(f"DEBUG: Successfully synced and saved ID: {new_event_id}")
 
         return {
             "message": "Added to Google Calendar!",
-            "event_id": created.get("id"),
+            "event_id": new_event_id,
             "event_link": created.get("htmlLink"),
         }
     except Exception as e:
-        db.rollback() # Error aaye toh database revert kar dein
+        db.rollback()
         print(f"[Calendar Error] {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
-
 
 @router.post("/sync-all")
 def sync_all_appointments(
