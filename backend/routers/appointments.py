@@ -285,7 +285,7 @@ def cancel_appointment(
     
     # ─── GOOGLE CALENDAR DELETION (Yahan add karein) ───────────────
     if appointment.google_event_id:
-        from routers.calendar import delete_calendar_event
+        from routers.calender import delete_calendar_event
         # Background task mein daalna behtar hai taake API fast rahay
         background_tasks.add_task(
             delete_calendar_event, 
