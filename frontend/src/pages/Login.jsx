@@ -25,7 +25,9 @@ export default function Login() {
       localStorage.setItem("api_key", form.api_key);
       const res = await api.get("/hospitals/me");
       saveAuth(form.api_key, res.data);
-      toast.success(`Welcome, ${res.data.name}!`);
+      toast.success(`Welcome, ${res.data.name}!`, {
+        duration: 3000,
+      });
       navigate("/");
     } catch (err) {
       localStorage.removeItem("api_key");
@@ -70,22 +72,23 @@ export default function Login() {
       <Toaster
         position="top-center"
         toastOptions={{
-          error: {
-            duration: 4000,
-            style: {
-              background: "#fef2f2",
-              color: "#dc2626",
-              border: "1px solid #fecaca",
-              fontWeight: "600",
-              fontSize: "14px",
-            },
-          },
+          duration: 3000, // ← add karo
           success: {
             duration: 3000,
             style: {
               background: "#f0fdf4",
               color: "#16a34a",
               border: "1px solid #bbf7d0",
+              fontWeight: "600",
+              fontSize: "14px",
+            },
+          },
+          error: {
+            duration: 4000,
+            style: {
+              background: "#fef2f2",
+              color: "#dc2626",
+              border: "1px solid #fecaca",
               fontWeight: "600",
               fontSize: "14px",
             },
