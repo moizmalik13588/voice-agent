@@ -5,7 +5,6 @@ import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Doctors from "./pages/Doctors";
-// import Doctors from "./pages/Doctors";
 import Appointments from "./pages/Appointments";
 import Patients from "./pages/Patients";
 import CallLogs from "./pages/CallLogs";
@@ -18,6 +17,11 @@ import Payments from "./pages/Payments";
 import Settings from "./pages/Settings";
 import DoctorLogin from "./pages/DoctorLogin";
 import DoctorDashboard from "./pages/DoctorDashboard";
+
+// If logged in, redirect away from login to dashboard
+function PublicRoute({ children }) {
+  return isLoggedIn() ? <Navigate to="/" replace /> : children;
+}
 
 function Protected({ children }) {
   return isLoggedIn() ? children : <Navigate to="/login" replace />;
@@ -39,9 +43,7 @@ export default function App() {
         containerStyle={{ zIndex: 99999 }}
         toastOptions={{
           duration: 2000,
-          success: {
-            duration: 2000,
-          },
+          success: { duration: 2000 },
           error: {
             duration: 3000,
             style: {
@@ -55,7 +57,17 @@ export default function App() {
         }}
       />
       <Routes>
-        <Route path="/login" element={<Login />} />
+        {/* ── Public routes — redirect to "/" if already logged in ── */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+
+        {/* ── Protected routes ── */}
         <Route
           path="/"
           element={
@@ -176,6 +188,8 @@ export default function App() {
             </Protected>
           }
         />
+
+        {/* ── Doctor routes ── */}
         <Route path="/doctor/login" element={<DoctorLogin />} />
         <Route
           path="/doctor/dashboard"
@@ -185,6 +199,9 @@ export default function App() {
             </DoctorProtected>
           }
         />
+
+        {/* ── Fallback ── */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

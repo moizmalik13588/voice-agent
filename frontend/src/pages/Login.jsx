@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Key, Building2, Phone, Mail, ArrowRight } from "lucide-react";
 import api from "../api/axios";
 import { saveAuth } from "../store/auth";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 export default function Login() {
   const [tab, setTab] = useState("login");
@@ -72,32 +72,6 @@ export default function Login() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 3000,
-          success: {
-            duration: 2500,
-            style: {
-              background: "#f0fdf4",
-              color: "#16a34a",
-              border: "1px solid #bbf7d0",
-              fontWeight: "600",
-              fontSize: "14px",
-            },
-          },
-          error: {
-            duration: 4000,
-            style: {
-              background: "#fef2f2",
-              color: "#dc2626",
-              border: "1px solid #fecaca",
-              fontWeight: "600",
-              fontSize: "14px",
-            },
-          },
-        }}
-      />
       {/* ── LEFT ── */}
       <div className="flex-1 bg-surface flex flex-col items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-sm">
