@@ -38,9 +38,12 @@ export default function App() {
         position="top-center"
         containerStyle={{ zIndex: 99999 }}
         toastOptions={{
-          duration: 5000,
+          duration: 2000,
+          success: {
+            duration: 2000,
+          },
           error: {
-            duration: 5000,
+            duration: 3000,
             style: {
               background: "#fee2e2",
               color: "#dc2626",

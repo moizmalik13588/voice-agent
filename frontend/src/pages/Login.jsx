@@ -25,14 +25,12 @@ export default function Login() {
       localStorage.setItem("api_key", form.api_key);
       const res = await api.get("/hospitals/me");
       saveAuth(form.api_key, res.data);
-      toast.success(`Welcome, ${res.data.name}!`, {
-        duration: 3000,
-      });
-      navigate("/");
+      toast.success(`Welcome, ${res.data.name}!`, { duration: 1500 });
+      setTimeout(() => {
+        navigate("/");
+      }, 500);
     } catch (err) {
       localStorage.removeItem("api_key");
-
-      // Proper error messages
       if (err.response?.status === 401) {
         toast.error("Invalid API Key — please check and try again");
       } else if (err.response?.status === 404) {
