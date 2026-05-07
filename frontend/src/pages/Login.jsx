@@ -57,7 +57,7 @@ export default function Login() {
     try {
       const res = await api.post("/hospitals/register", {
         name: form.name,
-        email: res.data.email,
+        email: form.email,
         phone: form.phone || undefined,
       });
       saveAuth(res.data.api_key, res.data);
