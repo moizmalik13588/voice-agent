@@ -54,7 +54,7 @@ class Doctor(Base):
     phone = Column(String, nullable=True)
     consultation_fee = Column(Integer, default=1000)
     is_active = Column(Boolean, default=True)
-    # ── New fields ──
+    
     login_email = Column(String, unique=True, nullable=True, index=True)
     login_password = Column(String, nullable=True)  # hashed
     created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.timezone.utc))
@@ -91,6 +91,10 @@ class Appointment(Base):
     start_time = Column(DateTime, nullable=False, index=True)
     end_time = Column(DateTime, nullable=False)
     status = Column(Enum(AppointmentStatus), default=AppointmentStatus.scheduled)
+    
+    # 🔥 Naya column jo Google Calendar deletion ke liye zaroori hai
+    google_event_id = Column(String, nullable=True) 
+    
     created_at = Column(DateTime, default=lambda: dt.datetime.now(dt.timezone.utc))
 
     hospital = relationship("Hospital", back_populates="appointments")

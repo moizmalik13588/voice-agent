@@ -13,6 +13,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from routers.notifications import create_notification
 
+
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
 
 
@@ -281,6 +282,19 @@ def cancel_appointment(
 ):
     appointment = _get_appointment_or_404(appointment_id, hospital.id, db)
     appointment.status = AppointmentStatus.canceled
+    
+    # ─── GOOGLE CALENDAR DELETION (Yahan add karein) ───────────────
+    if appointment.google_event_id:
+        from routers.calendar import delete_calendar_event
+        # Background task mein daalna behtar hai taake API fast rahay
+        background_tasks.add_task(
+            delete_calendar_event, 
+            appointment=appointment, 
+            hospital_id=hospital.id, 
+            db=db
+        )
+    # ──────────────────────────────────────────────────────────────
+
     db.commit()
 
     # ✅ Email
@@ -326,8 +340,7 @@ def cancel_appointment(
         db=db
     )
 
-    return {"message": "Appointment canceled successfully"}
-
+    return {"message": "Appointment canceled successfully and calendar updated"}
 
 # ─── Reschedule ───────────────────────────────────────
 @router.patch("/{appointment_id}/reschedule", response_model=AppointmentResponse)

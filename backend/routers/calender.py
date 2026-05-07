@@ -146,8 +146,8 @@ def calendar_status(
 
 @router.post("/sync/{appointment_id}")
 def sync_appointment(
-    appointment_id: int,
-    db: Session = Depends(get_db),
+    appointment_id: int, 
+    db: Session = Depends(get_db), 
     hospital=Depends(get_hospital)
 ):
     """Single appointment Google Calendar mein add karo"""
@@ -170,12 +170,18 @@ def sync_appointment(
         event = _create_calendar_event(appointment, hospital.name)
         created = service.events().insert(calendarId="primary", body=event).execute()
 
+        # 🔥 Sahi Indented Lines
+        appointment.google_event_id = created.get("id")
+        db.commit()
+
         return {
             "message": "Added to Google Calendar!",
             "event_id": created.get("id"),
             "event_link": created.get("htmlLink"),
         }
     except Exception as e:
+        db.rollback() # Error aaye toh database revert kar dein
+        print(f"[Calendar Error] {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -269,3 +275,26 @@ def _create_calendar_event(appointment: Appointment, hospital_name: str) -> dict
             ],
         },
     }
+
+# Yeh function Calendar.py mein niche add karein
+def delete_calendar_event(appointment_id: int, hospital_id: int, db: Session):
+    """Google Calendar se event delete karne ke liye helper"""
+    creds = get_credentials(hospital_id, db)
+    if not creds:
+        return  # Calendar connected nahi hai toh kuch nahi karna
+
+    appointment = db.execute(
+        select(Appointment).where(Appointment.id == appointment_id)
+    ).scalars().first()
+
+    # Agar appointment mil jaye aur uske paas google_event_id ho
+    if appointment and appointment.google_event_id:
+        try:
+            service = build("calendar", "v3", credentials=creds)
+            service.events().delete(
+                calendarId="primary", 
+                eventId=appointment.google_event_id
+            ).execute()
+            print(f"[Calendar] Event {appointment.google_event_id} deleted successfully.")
+        except Exception as e:
+            print(f"[Calendar Error] Could not delete event: {e}")
