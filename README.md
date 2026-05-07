@@ -1,5 +1,4 @@
-README.md
-markdown# MediBook — AI-Powered Hospital Management SaaS
+# MediBook — AI-Powered Hospital Management SaaS
 
 <div align="center">
 
@@ -27,19 +26,19 @@ MediBook is a complete hospital CRM + AI voice assistant platform built for Paki
 
 ### 🤖 AI Voice Agent
 - **Alex** — English AI voice assistant powered by VAPI
-- **Ali** — Urdu voice assistant for Pakistani patients
 - 24/7 automated call handling on real phone number (+1 662 238 0044)
 - Caller recognition — returning patients greeted by name
-- Natural conversation with booking, cancellation, slot checking
+- Natural conversation with booking, cancellation, and slot checking
 
 ### 📅 Appointment Management
 - Real-time slot availability per doctor
-- Book, cancel, reschedule appointments
+- Book, cancel, and reschedule appointments
 - Doctor availability schedule (days + time slots)
 - Duplicate appointment prevention
 - Confirm modal for all destructive actions
 
 ### 📱 Multi-Channel Notifications
+
 | Channel | Trigger |
 |---------|---------|
 | WhatsApp | Booking confirmation, 1-hour reminder, cancellation |
@@ -95,6 +94,7 @@ MediBook is a complete hospital CRM + AI voice assistant platform built for Paki
 ## 🛠️ Tech Stack
 
 ### Backend
+
 | Technology | Purpose |
 |------------|---------|
 | **Python FastAPI** | REST API server |
@@ -110,6 +110,7 @@ MediBook is a complete hospital CRM + AI voice assistant platform built for Paki
 | **Passlib + PyJWT** | Doctor authentication |
 
 ### Frontend
+
 | Technology | Purpose |
 |------------|---------|
 | **React 18 + Vite** | UI framework |
@@ -124,6 +125,8 @@ MediBook is a complete hospital CRM + AI voice assistant platform built for Paki
 ---
 
 ## 📁 Project Structure
+
+```
 voice-agent/
 ├── backend/
 │   ├── main.py                    # FastAPI app + lifespan
@@ -153,44 +156,46 @@ voice-agent/
 │       └── scheduler.py           # APScheduler jobs
 │
 └── frontend/
-├── src/
-│   ├── pages/
-│   │   ├── Login.jsx
-│   │   ├── Dashboard.jsx
-│   │   ├── Doctors.jsx
-│   │   ├── Appointments.jsx
-│   │   ├── Patients.jsx
-│   │   ├── CallLogs.jsx
-│   │   ├── Analytics.jsx
-│   │   ├── Revenue.jsx
-│   │   ├── Recall.jsx
-│   │   ├── NoShow.jsx
-│   │   ├── Medical.jsx
-│   │   ├── Payments.jsx
-│   │   ├── Settings.jsx
-│   │   ├── DoctorLogin.jsx
-│   │   └── DoctorDashboard.jsx
-│   ├── components/
-│   │   ├── Layout.jsx
-│   │   └── ConfirmModal.jsx
-│   ├── api/
-│   │   └── axios.js
-│   └── store/
-│       └── auth.js
-└── vercel.json
+    └── src/
+        ├── pages/
+        │   ├── Login.jsx
+        │   ├── Dashboard.jsx
+        │   ├── Doctors.jsx
+        │   ├── Appointments.jsx
+        │   ├── Patients.jsx
+        │   ├── CallLogs.jsx
+        │   ├── Analytics.jsx
+        │   ├── Revenue.jsx
+        │   ├── Recall.jsx
+        │   ├── NoShow.jsx
+        │   ├── Medical.jsx
+        │   ├── Payments.jsx
+        │   ├── Settings.jsx
+        │   ├── DoctorLogin.jsx
+        │   └── DoctorDashboard.jsx
+        ├── components/
+        │   ├── Layout.jsx
+        │   └── ConfirmModal.jsx
+        ├── api/
+        │   └── axios.js
+        └── store/
+            └── auth.js
+```
 
 ---
 
 ## 🗄️ Database Schema
+
+```
 hospitals
 └── doctors (many)
-└── doctor_availability (many)
+    └── doctor_availability (many)
 └── appointments (many)
 └── patient_notes (via patient_name)
 └── google_tokens
 └── payments
 └── notifications
-└── patient_notes
+```
 
 ---
 
@@ -214,6 +219,9 @@ pip install -r requirements.txt
 # Setup environment variables
 cp .env.example .env
 # Fill in your credentials
+
+# Run backend
+uvicorn main:app --reload --port 8000
 ```
 
 ### Environment Variables
@@ -251,11 +259,6 @@ MAIL_PORT=587
 SECRET_KEY=your-secret-key
 ```
 
-```bash
-# Run backend
-uvicorn main:app --reload --port 8000
-```
-
 ### Frontend Setup
 
 ```bash
@@ -274,14 +277,16 @@ npm run dev
 ---
 
 ## 🔄 AI Voice Flow
+
+```
 Patient calls +1 (662) 238 0044
-↓
+        ↓
 VAPI AI Agent (Alex) picks up
-↓
-identify_caller tool → check if returning patient
-↓
-Patient states request (book/cancel/check)
-↓
+        ↓
+identify_caller → check if returning patient
+        ↓
+Patient states request (book / cancel / check)
+        ↓
 Alex calls appropriate tool:
 ├── check_available_slots
 ├── book_appointment ──→ DB saved
@@ -291,26 +296,31 @@ Alex calls appropriate tool:
 │                    ──→ Google Calendar synced
 ├── cancel_appointment
 └── list_patient_appointments
-↓
+        ↓
 Dashboard updates in real-time
-↓
+        ↓
 APScheduler: 1-hour reminder sent automatically
+```
 
 ---
 
 ## ☁️ Deployment
 
 ### Backend → Railway
-Root Directory: backend
-Build Command: pip install -r requirements.txt
-Start Command: uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+Root Directory:  backend
+Build Command:   pip install -r requirements.txt
+Start Command:   uvicorn main:app --host 0.0.0.0 --port $PORT
+```
 
 ### Frontend → Vercel
-Root Directory: frontend
-Framework: Vite
-Build Command: npm run build
+```
+Root Directory:   frontend
+Framework:        Vite
+Build Command:    npm run build
 Output Directory: dist
-Environment: VITE_API_URL=https://your-railway-url.up.railway.app
+Environment:      VITE_API_URL=https://your-railway-url.up.railway.app
+```
 
 ---
 
