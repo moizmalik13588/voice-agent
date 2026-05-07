@@ -145,13 +145,10 @@ def calendar_status(
     return {"connected": creds is not None}
 
 
-from sqlalchemy import text # Top par ye add karein
+
 
 from sqlalchemy import text
 
-from sqlalchemy import text # Top par lazmi add karein
-
-from sqlalchemy import text
 
 @router.post("/sync/{appointment_id}")
 def sync_appointment(
@@ -163,35 +160,36 @@ def sync_appointment(
     if not creds:
         raise HTTPException(status_code=401, detail="Google Calendar not connected")
 
-    # 1. Direct model fetch
+    # 1. Appointment check karein
     appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
     try:
+        # 2. Google Calendar Event banayein
         service = build("calendar", "v3", credentials=creds)
         event = _create_calendar_event(appointment, hospital.name)
         created = service.events().insert(calendarId="primary", body=event).execute()
 
         new_id = created.get("id")
+        print(f"DEBUG: Google API returned ID: {new_id}")
 
-        # 🔥 PGBOUNCER/POOLER FIX:
-        # Direct execution within the session context
-        db.execute(
-            text("UPDATE appointments SET google_event_id = :val WHERE id = :id"),
-            {"val": new_id, "id": appointment_id}
-        )
+        # 3. 🔥 NEON/POSTGRES FORCED UPDATE
+        # Hum direct connection use kar ke execute karwa rahe hain
+        with db.begin_nested(): # Transaction ke andar transaction
+            db.execute(
+                text("UPDATE appointments SET google_event_id = :val WHERE id = :appt_id"),
+                {"val": new_id, "appt_id": appointment_id}
+            )
         
-        # Neon Pooler ke liye commit force karna
-        db.commit()
-        
-        print(f"DEBUG: Push successful. Google ID: {new_id}")
+        db.commit() # Final Commit
+        print(f"DEBUG: Database UPDATE command sent for ID {appointment_id}")
 
-        return {"message": "Success", "event_id": new_id}
+        return {"message": "Success", "google_event_id": new_id}
 
     except Exception as e:
         db.rollback()
-        print(f"ERROR: {str(e)}")
+        print(f"DATABASE ERROR: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/sync-all")
