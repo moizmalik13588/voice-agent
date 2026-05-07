@@ -219,6 +219,7 @@ def book_appointment(
         db=db
     )
 
+
     # ✅ Google Calendar — lazy import
     try:
         from routers.calender import GoogleToken, _create_calendar_event, CLIENT_ID, CLIENT_SECRET, SCOPES
@@ -237,11 +238,22 @@ def book_appointment(
                 scopes=SCOPES,
             )
             service = build("calendar", "v3", credentials=creds)
-            event = _create_calendar_event(appointment, hospital.name)
-            service.events().insert(calendarId="primary", body=event).execute()
-            print(f"[Calendar] Synced appointment {appointment.id}")
+            event_body = _create_calendar_event(appointment, hospital.name)
+            
+            # 🔥 FIX: Result ko variable mein lein aur save karein
+            created_event = service.events().insert(calendarId="primary", body=event_body).execute()
+            
+            # Database update
+            appointment.google_event_id = created_event.get("id")
+            db.add(appointment)
+            db.commit() # Save the ID to Neon
+            
+            print(f"[Calendar] Synced and Saved ID {appointment.google_event_id} for appointment {appointment.id}")
+            
     except Exception as e:
-        print(f"[Calendar] Sync skipped: {e}")
+        db.rollback()
+        print(f"[Calendar] Sync skipped or failed: {e}")
+        
 
     return _format_appointment(appointment, doctor.name)
 
