@@ -145,26 +145,21 @@ def calendar_status(
     return {"connected": creds is not None}
 
 
+from sqlalchemy import text # Top par ye add karein
+
 @router.post("/sync/{appointment_id}")
 def sync_appointment(
     appointment_id: int, 
     db: Session = Depends(get_db), 
     hospital=Depends(get_hospital)
 ):
-    """Single appointment Google Calendar mein add karo"""
     creds = get_credentials(hospital.id, db)
     if not creds:
         raise HTTPException(status_code=401, detail="Google Calendar not connected")
 
     # 1. Appointment verify karein
-    appointment = db.execute(
-        select(Appointment).where(
-            Appointment.id == appointment_id,
-            Appointment.hospital_id == hospital.id
-        )
-    ).scalars().first()
-
-    if not appointment:
+    appointment = db.get(Appointment, appointment_id) # Direct get use karein
+    if not appointment or appointment.hospital_id != hospital.id:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
     try:
@@ -175,15 +170,13 @@ def sync_appointment(
 
         new_event_id = created.get("id")
         
-        # 3. 🔥 Direct SQL Update (Taake null ka masla khatam ho)
-        db.execute(
-            update(Appointment)
-            .where(Appointment.id == appointment_id)
-            .values(google_event_id=new_event_id)
-        )
-        db.commit() 
+        # 3. 🔥 RAW SQL UPDATE (Sab se powerful tareeqa)
+        # Is se SQLAlchemy ke session ka koi masla nahi rahega
+        query = text("UPDATE appointments SET google_event_id = :event_id WHERE id = :appt_id")
+        db.execute(query, {"event_id": new_event_id, "appt_id": appointment_id})
+        db.commit() # Force commit
         
-        print(f"DEBUG: Successfully synced and saved ID: {new_event_id}")
+        print(f"DEBUG: Fixed update for ID {appointment_id}. Google ID: {new_event_id}")
 
         return {
             "message": "Added to Google Calendar!",
@@ -192,7 +185,7 @@ def sync_appointment(
         }
     except Exception as e:
         db.rollback()
-        print(f"[Calendar Error] {str(e)}")
+        print(f"[CRITICAL ERROR] Update failed: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/sync-all")
