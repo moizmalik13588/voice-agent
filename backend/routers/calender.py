@@ -149,6 +149,10 @@ from sqlalchemy import text # Top par ye add karein
 
 from sqlalchemy import text
 
+from sqlalchemy import text # Top par lazmi add karein
+
+from sqlalchemy import text
+
 @router.post("/sync/{appointment_id}")
 def sync_appointment(
     appointment_id: int, 
@@ -159,40 +163,35 @@ def sync_appointment(
     if not creds:
         raise HTTPException(status_code=401, detail="Google Calendar not connected")
 
-    # 1. Direct fetch
-    appointment = db.query(Appointment).filter(
-        Appointment.id == appointment_id, 
-        Appointment.hospital_id == hospital.id
-    ).first()
-
+    # 1. Direct model fetch
+    appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
     try:
-        # 2. Google Calendar Event Create
         service = build("calendar", "v3", credentials=creds)
         event = _create_calendar_event(appointment, hospital.name)
         created = service.events().insert(calendarId="primary", body=event).execute()
 
         new_id = created.get("id")
-        
-        # 3. 🔥 THE FIX: Direct assignment with Flush & Commit
-        appointment.google_event_id = new_id
-        db.add(appointment)
-        db.flush()  # Pehle database ko changes bhejo
-        db.commit() # Phir permanent save karo
-        db.refresh(appointment) # Database se wapas confirm karo
-        
-        print(f"DEBUG: Saved ID {new_id} for Appt {appointment_id}")
 
-        return {
-            "message": "Added to Google Calendar!",
-            "event_id": appointment.google_event_id,
-            "event_link": created.get("htmlLink"),
-        }
+        # 🔥 PGBOUNCER/POOLER FIX:
+        # Direct execution within the session context
+        db.execute(
+            text("UPDATE appointments SET google_event_id = :val WHERE id = :id"),
+            {"val": new_id, "id": appointment_id}
+        )
+        
+        # Neon Pooler ke liye commit force karna
+        db.commit()
+        
+        print(f"DEBUG: Push successful. Google ID: {new_id}")
+
+        return {"message": "Success", "event_id": new_id}
+
     except Exception as e:
         db.rollback()
-        print(f"CRITICAL ERROR: {str(e)}")
+        print(f"ERROR: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/sync-all")
