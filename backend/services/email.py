@@ -7,12 +7,12 @@ conf = ConnectionConfig(
     MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
     MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
     MAIL_FROM=os.getenv("MAIL_FROM"),
-    MAIL_PORT=587,            # Port 587 try karein
-    MAIL_SERVER="smtp.gmail.com",
-    MAIL_STARTTLS=True,       # 587 ke liye True
-    MAIL_SSL_TLS=False,       # 587 ke liye False
+    MAIL_PORT=465,
+    MAIL_SERVER="smtp.resend.com",
+    MAIL_STARTTLS=False,
+    MAIL_SSL_TLS=True,
     USE_CREDENTIALS=True,
-    VALIDATE_CERTS=False,     # Isay False rakhna zaroori hai
+    VALIDATE_CERTS=True,
     TIMEOUT=60
 )
 async def send_appointment_confirmation_email(
